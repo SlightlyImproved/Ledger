@@ -10,20 +10,20 @@ It **still in development**, but you already can test it out. Get it on [ESOUI](
 
 ## Usage
 
-After your just installed it the Ledger window will be open for you, but empty. Then every time you gain or lose some money it will add a new record.
+Every time you gain or lose gold, **Ledger** will automatically add a new record.
 
-You can close it if you want, nothing will be lost. Whenever you want to see it again, just type `/ledger`.
+If you close the window, just type `/ledger` to bring it up again.
 
 ## Roadmap
 
 For the short/medium term I plan to:
 
-1. Fix some issues with the scroll list and data loading
+1. Fix some issues with the scroll list and data loading (press "i" to manually reload it)
 2. Add search/filter functionality for locating records more swiftly
 3. Allow the user to add notes to the records
 4. Add financial statistics
 
-But it's not set in stone, and I honestly want to hear from you, what you'd like to see added ? What are your issues when managing your hard earned money ?
+But it's not set in stone, and I honestly want to hear from you, what you'd like to see added ? What are your issues when managing your hard earned gold ?
 
 You can reach to me at the [Ledger's thread on ESOUI](http://www.esoui.com/forums/showthread.php?p=22651#post22651).
 
