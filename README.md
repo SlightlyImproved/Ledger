@@ -6,7 +6,7 @@
 
 **Ledger** is an Elder Scrolls Online add-on that keeps records of your income and expenses, like in a financial spreadsheet.
 
-It **still in development**, but you already can test it out. Get it on [ESOUI](http://www.esoui.com/addons.php).
+It **still in development**, but you already can test it out. Get it on [ESOUI](http://www.esoui.com/downloads/info1172-Ledger.html).
 
 ## Usage
 
@@ -25,7 +25,7 @@ For the short/medium term I plan to:
 
 But it's not set in stone, and I honestly want to hear from you, what you'd like to see added ? What are your issues when managing your hard earned money ?
 
-You can reach to me at the [Ledger's thread on ESOUI](http://www.esoui.com/forums).
+You can reach to me at the [Ledger's thread on ESOUI](http://www.esoui.com/forums/showthread.php?p=22651#post22651).
 
 ## Help wanted
 
