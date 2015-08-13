@@ -1,0 +1,10 @@
+## APIVersion: 100011
+## Title: Ledger
+## Description: Keep track of your money.
+## Version 0.0.0
+## License: CC-BY-SA-4.0
+## SavedVariables: LedgerCache
+
+Ledger.lua
+Ledger$(language).lua
+Ledger.xml
