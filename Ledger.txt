@@ -1,6 +1,6 @@
 ## APIVersion: 100011
 ## Title: Ledger
-## Description: Keep track of your money.
+## Description: Keep tabs on your money.
 ## Version 0.0.0
 ## License: CC-BY-SA-4.0
 ## SavedVariables: LedgerCache

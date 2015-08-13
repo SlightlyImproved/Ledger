@@ -1,6 +1,6 @@
 # Ledger
 
-> Keep track of your money.
+> Keep tabs on your money.
 
 ## About
 
