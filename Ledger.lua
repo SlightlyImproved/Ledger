@@ -1,14 +1,14 @@
 
 Ledger           = {}
 Ledger.name      = "Ledger"
-Ledger.version   = 1
+Ledger.version   = 1 -- Bump only when `cache` is changed
 
 Ledger.cache        = {}
 Ledger.cache.sheet  = {}
 Ledger.cache.x      = 0
 Ledger.cache.y      = 0
-Ledger.cache.w      = 480
-Ledger.cache.h      = 240
+Ledger.cache.w      = 520
+Ledger.cache.h      = 300
 Ledger.cache.hidden = false
 
 --
