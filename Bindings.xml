@@ -1,0 +1,11 @@
+<Bindings>
+  <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
+    <Category name="|cFFEE66 Ledger|r">
+      <Action name="LEDGER_TOGGLE">
+        <Down>
+      		LEDGER:Toggle()
+      	</Down>
+      </Action>
+    </Category>
+  </Layer>
+</Bindings>
