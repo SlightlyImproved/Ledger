@@ -49,6 +49,12 @@ I'm looking for people to help me with:
 
 Any help is really appreciated!
 
+## Acknowledgement 
+
+Any of this wouldn't be possible without lots of help from the good people of the ESOUI community.
+
+Thank you, and may the Nines bless you all!
+
 ## License
 
 See [CC-BY-NC-SA-4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
