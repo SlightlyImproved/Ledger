@@ -1,0 +1,76 @@
+
+local REASONS = {
+  [CURRENCY_CHANGE_REASON_ABILITY_UPGRADE_PURCHASE] = "Fertigkeit erweiterung",
+  [CURRENCY_CHANGE_REASON_ACHIEVEMENT]              = "Errungenschaft",
+  [CURRENCY_CHANGE_REASON_ACTION]                   = nil,
+  [CURRENCY_CHANGE_REASON_BAGSPACE]                 = "Inventar erweiterung",
+  [CURRENCY_CHANGE_REASON_BANKSPACE]                = "Bank erweiterung",
+  [CURRENCY_CHANGE_REASON_BANK_DEPOSIT]             = "Bank hinterlegung",
+  [CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL]          = "Bank entnahme",
+  [CURRENCY_CHANGE_REASON_BATTLEGROUND]             = nil,
+  [CURRENCY_CHANGE_REASON_BOUNTY_CONFISCATED]       = "Kopfgeld eingezogen",
+  [CURRENCY_CHANGE_REASON_BOUNTY_PAID_FENCE]        = "Kopfgeld gezahlt (hehler)",
+  [CURRENCY_CHANGE_REASON_BOUNTY_PAID_GUARD]        = "Kopfgeld gezahlt (wache)",
+  [CURRENCY_CHANGE_REASON_BUYBACK]                  = "Rückkauf",
+  [CURRENCY_CHANGE_REASON_CASH_ON_DELIVERY]         = "Bargeld durch lieferung",
+  [CURRENCY_CHANGE_REASON_COMMAND]                  = nil,
+  [CURRENCY_CHANGE_REASON_CONSUME_FOOD_DRINK]       = nil,
+  [CURRENCY_CHANGE_REASON_CONSUME_POTION]           = nil,
+  [CURRENCY_CHANGE_REASON_CONVERSATION]             = nil,
+  [CURRENCY_CHANGE_REASON_CRAFT]                    = "Handwerk",
+  [CURRENCY_CHANGE_REASON_DECONSTRUCT]              = "Zerlegen",
+  [CURRENCY_CHANGE_REASON_EDIT_GUILD_HERALDRY]      = nil,
+  [CURRENCY_CHANGE_REASON_FEED_MOUNT]               = nil,
+  [CURRENCY_CHANGE_REASON_GUILD_BANK_DEPOSIT]       = "Bank hinterlegung (gilde)",
+  [CURRENCY_CHANGE_REASON_GUILD_BANK_WITHDRAWAL]    = "Bank entnahme (gilde)",
+  [CURRENCY_CHANGE_REASON_GUILD_FORWARD_CAMP]       = nil,
+  [CURRENCY_CHANGE_REASON_GUILD_STANDARD]           = nil,
+  [CURRENCY_CHANGE_REASON_GUILD_TABARD]             = "Wappenrock",
+  [CURRENCY_CHANGE_REASON_HARVEST_REAGENT]          = nil,
+  [CURRENCY_CHANGE_REASON_HOOKPOINT_STORE]          = nil,
+  [CURRENCY_CHANGE_REASON_JUMP_FAILURE_REFUND]      = nil,
+  [CURRENCY_CHANGE_REASON_KEEP_REPAIR]              = "Bergfried reperatur",
+  [CURRENCY_CHANGE_REASON_KEEP_REWARD]              = "Bergfried belohnung",
+  [CURRENCY_CHANGE_REASON_KEEP_UPGRADE]             = "Bergfried erweiterung",
+  [CURRENCY_CHANGE_REASON_KILL]                     = nil,
+  [CURRENCY_CHANGE_REASON_LOOT]                     = "Loot",
+  [CURRENCY_CHANGE_REASON_LOOT_STOLEN]              = "Gestohlen",
+  [CURRENCY_CHANGE_REASON_MAIL]                     = "Mail",
+  [CURRENCY_CHANGE_REASON_MEDAL]                    = nil,
+  [CURRENCY_CHANGE_REASON_PICKPOCKET]               = "Taschendiebstahl",
+  [CURRENCY_CHANGE_REASON_PLAYER_INIT]              = nil,
+  [CURRENCY_CHANGE_REASON_PVP_RESURRECT]            = nil,
+  [CURRENCY_CHANGE_REASON_QUESTREWARD]              = "Quest",
+  [CURRENCY_CHANGE_REASON_RECIPE]                   = nil,
+  [CURRENCY_CHANGE_REASON_REFORGE]                  = nil,
+  [CURRENCY_CHANGE_REASON_RESEARCH_TRAIT]           = nil,
+  [CURRENCY_CHANGE_REASON_RESPEC_CHAMPION]          = nil,
+  [CURRENCY_CHANGE_REASON_RESPEC_MORPHS]            = nil,
+  [CURRENCY_CHANGE_REASON_RESPEC_SKILLS]            = nil,
+  [CURRENCY_CHANGE_REASON_REWARD]                   = "Belohnung",
+  [CURRENCY_CHANGE_REASON_SELL_STOLEN]              = nil,
+  [CURRENCY_CHANGE_REASON_SOULWEARY]                = nil,
+  [CURRENCY_CHANGE_REASON_SOUL_HEAL]                = nil,
+  [CURRENCY_CHANGE_REASON_STABLESPACE]              = nil,
+  [CURRENCY_CHANGE_REASON_STUCK]                    = nil,
+  [CURRENCY_CHANGE_REASON_TRADE]                    = "Handel",
+  [CURRENCY_CHANGE_REASON_TRADINGHOUSE_LISTING]     = nil,
+  [CURRENCY_CHANGE_REASON_TRADINGHOUSE_PURCHASE]    = "Gildenladen Kauf",
+  [CURRENCY_CHANGE_REASON_TRADINGHOUSE_REFUND]      = "Gildenladen Verkauf",
+  [CURRENCY_CHANGE_REASON_TRAIT_REVEAL]             = nil,
+  [CURRENCY_CHANGE_REASON_TRAVEL_GRAVEYARD]         = nil,
+  [CURRENCY_CHANGE_REASON_VENDOR]                   = "Verkäufer",
+  [CURRENCY_CHANGE_REASON_VENDOR_LAUNDER]           = "Geldwäsche",
+  [CURRENCY_CHANGE_REASON_VENDOR_REPAIR]            = "Reperaturen",
+}
+
+for n, value in pairs(REASONS) do
+  ZO_CreateStringId("SI_LEDGER_REASON" .. n, value)
+end
+
+ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP" , "Zeitpunkt")
+ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER" , "Character")
+ZO_CreateStringId("SI_LEDGER_HEADER_REASON"    , "Grund")
+ZO_CreateStringId("SI_LEDGER_HEADER_VARIATION" , "Veränderung")
+ZO_CreateStringId("SI_LEDGER_HEADER_BALANCE"   , "Abschluss")
+ZO_CreateStringId("SI_LEDGER_TITLE"            , "Hauptbuch")

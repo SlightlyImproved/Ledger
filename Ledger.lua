@@ -1,165 +1,198 @@
 
-Ledger           = {}
-Ledger.name      = "Ledger"
-Ledger.version   = 1 -- Bump only when `cache` is changed
+-- Ledger 0.0.1 Fri Aug 14 17:33:21 BRT 2015
+-- more on https://github.com/haggen/Ledger
+local Ledger = ZO_SortFilterList:Subclass()
 
-Ledger.cache        = {}
-Ledger.cache.sheet  = {}
-Ledger.cache.x      = 0
-Ledger.cache.y      = 0
-Ledger.cache.w      = 520
-Ledger.cache.h      = 300
-Ledger.cache.hidden = false
-
---
---
---
-
-local function Loaded(e, name)
-  if Ledger.name == name then
-    Ledger:Initialize()
-  end
-end
-
-local function MoneyUpdated(e, amount, previousAmount, reason)
-  if Ledger.initialized then
-    Ledger:Update(amount, previousAmount, reason)
-  end
-end
-
-EVENT_MANAGER:RegisterForEvent(Ledger.name, EVENT_ADD_ON_LOADED, Loaded)
-EVENT_MANAGER:RegisterForEvent(Ledger.name, EVENT_MONEY_UPDATE, MoneyUpdated)
-
-SLASH_COMMANDS["/ledger"] = function(options)
-  Ledger:ToggleUI()
-end
-
---
---
---
-
-function Ledger:Initialize()
-  self.cache = ZO_SavedVars:New("LedgerCache", self.version, nil, self.cache)
-
-  self:RestoreUI()
-
-  self.initialized = true
-end
-
-function Ledger:SetupList()
-  self.list = LedgerList:New(LedgerUI)
-end
-
-function Ledger:ToggleUI()
-  LedgerUI:SetHidden(not self.cache.hidden)
-  Ledger:SaveUI()
-end
-
-function Ledger:RestoreUI()
-  LedgerUI:ClearAnchors()
-  LedgerUI:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.cache.x, self.cache.y)
-  LedgerUI:SetDimensions(self.cache.w, self.cache.h)
-  LedgerUI:SetHidden(self.cache.hidden)
-end
-
-function Ledger:SaveUI()
-  self.cache.x = LedgerUI:GetLeft()
-  self.cache.y = LedgerUI:GetTop()
-  self.cache.w = LedgerUI:GetWidth()
-  self.cache.h = LedgerUI:GetHeight()
-  self.cache.hidden = LedgerUI:IsHidden()
-end
-
-function Ledger:Update(amount, previousAmount, reason)
-  local data = {}
-
-  data.timestamp = GetTimeStamp()
-  data.previousAmount = previousAmount
-  data.amount = amount
-  data.reason = reason
-
-  table.insert(self.cache.sheet, data)
-
-  self.list:RefreshData()
-end
-
-function Ledger:Reset()
-  for i,_ in ipairs(self.cache.sheet) do self.cache.sheet[i] = nil end
-end
-
---
---
---
-
-LedgerList = ZO_SortFilterList:Subclass()
-
-LedgerList.SORTINGS = {
-  timestamp = { numeric = true },
-  reason = { numeric = true, tiebreaker = "timestamp" },
-  amount = { numeric = true, tiebreaker = "timestamp" },
-  variation = { numeric = true },
+-- Default window settings
+local DEFAULT_SETTINGS = {
+  w = 520, h = 300, x = 0, y = 0, hidden = false
 }
 
-function LedgerList:New(control, addon)
-  local manager = ZO_SortFilterList.New(self, control)
+-- Cache format version
+local CACHE_VERSION = 2
 
-  manager:SetAlternateRowBackgrounds(true)
+-- Default cache table
+local CACHE_DEFAULTS = {
+  settings = DEFAULT_SETTINGS,
+  spreadsheet = {},
+  characters = {},
+}
 
-  manager.sort = function(a, b) return manager:CompareRows(a, b) end
+-- List configuration
+local DEFAULT_SORT_KEY = "timestamp"
+local DEFAULT_SORT_ORDER = ZO_SORT_ORDER_DOWN
+local ROW_HEIGHT = 28
+local LEDGER_DATA = 1
 
-  ZO_ScrollList_AddDataType(manager.list, 1, "LedgerUIRow", 28, function(...) manager:SetupRow(...) end)
-  ZO_ScrollList_SetTypeSelectable(manager.list, 1, false)
-  ZO_ScrollList_EnableHighlight(manager.list, "ZO_ThinListHighlight")
-  ZO_ScrollList_EnableSelection(manager.list, "ZO_ThinListHighlight", function(...) manager:OnSelectionChanged(...) end)
-  ZO_ScrollList_SetDeselectOnReselect(manager.list, false)
-  ZO_ScrollList_SetAutoSelect(manager.list, true)
+-- Sortable keys
+local SORT_KEYS = {
+  timestamp = { isNumeric = true },
+  character = { tiebreaker = "timestamp", caseInsensitive = true },
+  reason    = { tiebreaker = "timestamp", caseInsensitive = true },
+  variation = { tiebreaker = "timestamp", isNumeric = true },
+  balance   = { tiebreaker = "timestamp", isNumeric = true },
+}
 
-  return manager
+-- Credits to `votan` http://www.esoui.com/forums/member.php?u=13996
+function GetTimeZone()
+  local localTimeShift = GetSecondsSinceMidnight() - (GetTimeStamp() % 86400)
+  if localTimeShift < -43200 then localTimeShift = localTimeShift + 86400 end
+  return localTimeShift
 end
 
-function LedgerList:BuildMasterList()
-  self.masterList = ZO_DeepTableCopy(Ledger.cache.sheet, {})
+function FixCacheVersion1To2(cache2)
+  local cache1 = ZO_SavedVars:New("LedgerCache", 1, nil, {})
+  if not cache1["sheet"] then return end
 
-  for i = 1, #self.masterList do
-    local t = self.masterList[i]
-    t.variation = t.amount - t.previousAmount
-    t.reason = Ledger.STRINGS[t.reason] or t.reason
+  for i = 1, #cache1.sheet do
+    local t = cache1.sheet[i]
+    local n = {}
+
+    n.variation = t.amount - t.previousAmount
+    n.balance = t.amount
+    n.reason = t.reason
+    n.timestamp = t.timestamp
+    n.character = GetUnitName("player")
+
+    table.insert(cache2.spreadsheet, n)
+  end
+
+  ZO_ShallowTableCopy(cache1.ui, cache2.settings)
+end
+
+function Ledger:New(control)
+  local this = ZO_SortFilterList.New(self, control)
+
+  this:SetAlternateRowBackgrounds(true)
+  ZO_ScrollList_AddDataType(this.list, LEDGER_DATA, "LedgerRow", ROW_HEIGHT, function(...) this:SetupRow(...) end)
+
+  local function OnAddOnLoaded(e, name)
+    if name ~= "Ledger" then
+      this.cache = ZO_SavedVars:NewAccountWide("LedgerCache", CACHE_VERSION, nil, CACHE_DEFAULTS)
+
+      FixCacheVersion1To2(this.cache)
+
+      this.settings = this.cache.settings
+      this.spreadsheet = this.cache.spreadsheet
+      this.isDirty = true
+
+      this:Restore()
+      this:Refresh()
+    end
+  end
+
+  local function OnMoneyUpdate(e, balance, previously, reason)
+    local entry = {}
+
+    entry.timestamp = GetTimeStamp()
+    entry.character = GetUnitName("player")
+    entry.reason = reason
+    entry.variation = balance - previously
+    entry.balance = balance
+
+    table.insert(this.spreadsheet, entry)
+    this.isDirty = true
+  end
+
+  this.control:RegisterForEvent(EVENT_ADD_ON_LOADED, OnAddOnLoaded)
+  this.control:RegisterForEvent(EVENT_MONEY_UPDATE, OnMoneyUpdate)
+
+  return this
+end
+
+function Ledger:Refresh()
+  if self.isDirty then
+    self:RefreshData()
   end
 end
 
-function LedgerList:FilterScrollList()
+function Ledger:BuildMasterList()
+  self.isDirty = false
+  self.masterList = {}
+
+  for i = 1, self.spreadsheet do
+    local t = ZO_ShallowTableCopy(self.spreadsheet[i], {})
+    t.reason = GetString("SI_LEDGER_REASON", t.reason)
+    table.insert(self.masterList, t)
+  end
+end
+
+function Ledger:FilterScrollList()
   local scrollData = ZO_ScrollList_GetDataList(self.list)
   ZO_ClearNumericallyIndexedTable(scrollData)
 
   for i = 1, #self.masterList do
-    table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, self.masterList[i]))
+    table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LEDGER_DATA, self.masterList[i]))
   end
 end
 
-function LedgerList:OnSelectionChanged(previouslySelected, selected, reselectingDuringRebuild)
-  ZO_SortFilterList.OnSelectionChanged(self, previouslySelected, selected)
-end
-
-function LedgerList:SortScrollList()
+function Ledger:SortScrollList()
   local scrollData = ZO_ScrollList_GetDataList(self.list)
-  table.sort(scrollData, self.sort)
+  table.sort(scrollData, function(...) self:CompareRows(...) end)
 end
 
-function LedgerList:SetupRow(control, data)
+function Ledger:SetupRow(control, data)
   ZO_SortFilterList.SetupRow(self, control, data)
 
+  -- TODO: format 24h and adjust to timezone
   local timestamp = GetDateStringFromTimestamp(data.timestamp) .. " " .. FormatTimeSeconds(data.timestamp, TIME_FORMAT_STYLE_CLOCK_TIME)
-
-  local hue = data.variation > 0 and { 0.15, 0.85, .25, 1 } or { 0.85, 0.15, 0.25, 1 }
+  local hue = data.variation > 0 and { 0.15, 0.85, .35, 1 } or { 0.85, 0.15, 0.35, 1 }
 
   GetControl(control, "Timestamp"):SetText(timestamp)
+  GetControl(control, "Character"):SetText(data.character)
   GetControl(control, "Reason"):SetText(data.reason)
-  GetControl(control, "Amount"):SetText(ZO_CurrencyControl_FormatCurrency(data.amount))
+  GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
 
   GetControl(control, "Variation"):SetText(ZO_CurrencyControl_FormatCurrency(data.variation))
   GetControl(control, "Variation"):SetColor(unpack(hue))
 end
 
-function LedgerList:CompareRows(a, b)
-  return ZO_TableOrderingFunction(a.data, b.data, self.currentSortKey, LedgerList.SORTINGS, self.currentSortOrder)
+function Ledger:CompareRows(a, b)
+  return ZO_TableOrderingFunction(a.data, b.data, self.currentSortKey or DEFAULT_SORT_KEY, SORT_KEYS, self.currentSortOrder or DEFAULT_SORT_ORDER)
+end
+
+function Ledger:ChangeSheet(name)
+  self.cache.lastSheet = name
+  self.currentSheet = name
+  self.isDirty = true
+end
+
+function Ledger:Toggle()
+  self.control:ToggleHidden()
+end
+
+function Ledger:Restore()
+  self.control:ClearAnchors()
+  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.settings.x, self.settings.y)
+  self.control:SetDimensions(self.settings.w, self.settings.h)
+  self.control:SetHidden(self.settings.hidden)
+end
+
+function Ledger:Save()
+  self.settings.x = self.control:GetLeft()
+  self.settings.y = self.control:GetTop()
+  self.settings.w = self.control:GetWidth()
+  self.settings.h = self.control:GetHeight()
+  self.settings.hidden = self.control:IsHidden()
+end
+
+--
+--
+--
+
+function Ledger_OnInitialized(control)
+  LEDGER = Ledger:New(control)
+end
+
+function LedgerClose_OnMouseUp(control)
+  LEDGER:Toggle()
+end
+
+function Ledger_OnMoveStop()
+  LEDGER:Save()
+end
+
+function Ledger_OnResizeStop()
+  LEDGER:Save()
+  LEDGER:Refresh()
 end

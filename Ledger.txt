@@ -1,10 +1,12 @@
 ## APIVersion: 100011
 ## Title: Ledger
 ## Description: Keep tabs on your money.
-## Version 0.0.0
-## License: CC-BY-SA-4.0
+## Version: 0.1.0
+## Author: Arthur
+## License: CC-BY-NC-SA-4.0
 ## SavedVariables: LedgerCache
 
+EN.lua
+$(language).lua
 Ledger.lua
-Ledger$(language).lua
 Ledger.xml
