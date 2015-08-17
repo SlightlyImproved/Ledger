@@ -16,8 +16,9 @@ You can assign a key to open/close this window. Alternatively, you can simply ty
 
 ### Upcoming
 
-1. Allow the user to filter transactions by character
-2. Add missing reason labels
+1. Filter transactions by character
+2. Aggregate transactions by reason or date
+3. Add missing reason labels
 
 ### Backlog
 
@@ -31,13 +32,13 @@ You can assign a key to open/close this window. Alternatively, you can simply ty
 ## Change log
 
 - **Fri Aug 16 15:47:21 BRT 2015**
-  1. Fixed a bug where data failed to load leaving the window empty
-  2. Fixed an error occurring on non-English game clients
-  3. Added German localization (fine contribution from [Baertram](http://www.esoui.com/forums/member.php?u=2028))
-  4. Now players can see the transactions of all characters
-  5. Now player are able to configure a key binding that toggles Ledger window
-  6. Added missing reason names (thank you [dominoid](http://www.esoui.com/forums/member.php?u=345))
-  7. Date/time column now considers game localization and clock format
+  - Fixed a bug where data failed to load leaving the window empty
+  - Fixed an error occurring on non-English game clients
+  - Added German localization (fine contribution from [Baertram](http://www.esoui.com/forums/member.php?u=2028))
+  - Now, players can see the transactions of all characters
+  - Now, players are able to configure a key binding to open/close the Ledger window
+  - Added missing reason names (thank you [dominoid](http://www.esoui.com/forums/member.php?u=345))
+  - Date/time column now considers game localization, player's timezone and clock format
 
 ## Help wanted
 
@@ -49,7 +50,7 @@ I'm looking for people to help me with:
 
 Any help is really appreciated!
 
-## Acknowledgement 
+## Acknowledgement
 
 Any of this wouldn't be possible without lots of help from the good people of the ESOUI community.
 
