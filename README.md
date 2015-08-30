@@ -17,8 +17,9 @@ You can assign a key to open/close this window. Alternatively, you can simply ty
 ### Upcoming
 
 1. Filter transactions by character
-2. Aggregate transactions by reason or date
-3. Add missing reason labels
+2. Aggregate transactions by date
+3. Complete interface texts
+4. Compatibility with ESO 2.1.0 (APIVersion 100012)
 
 ### Backlog
 

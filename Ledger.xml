@@ -2,7 +2,7 @@
   <Controls>
 
     <Control name="LedgerRow" virtual="true">
-      <Dimensions y="LEDGER_ROW_HEIGHT" />
+      <Dimensions y="28" />
       <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
 
       <Controls>
@@ -66,10 +66,8 @@
 
         <!-- / -->
 
-        <Button name="$(parent)Close" inherits="ZO_DefaultButton">
-          <Dimensions x="32" y="32" />
+        <Button name="$(parent)Close" inherits="ZO_CloseButton">
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="0" offsetY="10" />
-          <Textures normal="/esoui/art/buttons/closebutton_up.dds" pressed="/esoui/art/buttons/closebutton_down.dds" mouseOver="/esoui/art/buttons/closebutton_mouseover.dds" disabled="/esoui/art/buttons/closebutton_disabled.dds" />
           <OnMouseUp>
             LedgerClose_OnMouseUp(self)
           </OnMouseUp>
@@ -77,7 +75,7 @@
 
         <!-- / -->
 
-        <Label name="$(parent)Heading" text="SI_LEDGER_HEADING" color="FFEE66" font="ZoFontHeader2">
+        <Label name="$(parent)Title" text="SI_LEDGER_TITLE" color="FFEE66" font="ZoFontHeader2">
           <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="15" offsetY="15" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-15" offsetY="15" />
         </Label>
@@ -86,8 +84,8 @@
 
         <Control name="$(parent)Headers">
           <Dimensions y="32" />
-          <Anchor point="TOPLEFT" relativeTo="$(parent)Heading" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="10" />
-          <Anchor point="TOPRIGHT" relativeTo="$(parent)Heading" relativePoint="BOTTOMRIGHT" offsetX="-12" offsetY="10" />
+          <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="10" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-12" offsetY="10" />
 
           <Controls>
             <Control name="$(parent)Timestamp" inherits="ZO_SortHeader">
