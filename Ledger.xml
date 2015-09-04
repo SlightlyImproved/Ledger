@@ -1,34 +1,38 @@
 <GuiXml>
+
+  <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|soft-shadow-thick" />
+
   <Controls>
+    <Label name="LedgerRowLabel" font="LedgerRowFont" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" wrapMode="ELLIPSIS" virtual="true" />
 
     <Control name="LedgerRow" virtual="true">
-      <Dimensions y="28" />
+      <Dimensions y="LEDGER_ROW_HEIGHT" />
       <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
 
       <Controls>
         <Texture name="$(parent)BG" inherits="ZO_ThinListBgStrip" />
 
-        <Label name="$(parent)Timestamp" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" font="ZoFontGameSmall">
-          <Dimensions x="120" y="LEDGER_ROW_HEIGHT" />
+        <Label name="$(parent)Timestamp" inherits="LedgerRowLabel">
+          <Dimensions x="160" y="LEDGER_ROW_HEIGHT" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
         </Label>
 
-        <Label name="$(parent)Character" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" font="ZoFontGameSmall">
+        <Label name="$(parent)Character" inherits="LedgerRowLabel">
           <Dimensions x="180" y="LEDGER_ROW_HEIGHT" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)Timestamp" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
         </Label>
 
-        <Label name="$(parent)Balance" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" font="ZoFontGameSmall">
+        <Label name="$(parent)Balance" inherits="LedgerRowLabel">
           <Dimensions x="120" y="LEDGER_ROW_HEIGHT" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
         </Label>
 
-        <Label name="$(parent)Variation" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" font="ZoFontGameSmall">
+        <Label name="$(parent)Variation" inherits="LedgerRowLabel">
           <Dimensions x="120" y="LEDGER_ROW_HEIGHT" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)Balance" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
         </Label>
 
-        <Label name="$(parent)Reason" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" font="ZoFontGameSmall">
+        <Label name="$(parent)Reason" inherits="LedgerRowLabel">
           <Dimensions y="LEDGER_ROW_HEIGHT" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)Character" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)Variation" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
@@ -39,8 +43,8 @@
     <!-- / -->
 
     <TopLevelControl movable="true" mouseEnabled="true" name="Ledger" resizeHandleSize="5">
-      <Dimensions x="LEDGER_MINIMUM_WIDTH" y="LEDGER_MINIMUM_HEIGHT" />
-      <DimensionConstraints minX="LEDGER_MINIMUM_WIDTH" minY="LEDGER_MINIMUM_HEIGHT" />
+      <Dimensions x="LEDGER_WIDTH" y="LEDGER_HEIGHT" />
+      <DimensionConstraints minX="LEDGER_WIDTH" minY="LEDGER_HEIGHT" />
       <Anchor point="CENTER" />
 
       <OnInitialized>
@@ -67,7 +71,7 @@
         <!-- / -->
 
         <Button name="$(parent)Close" inherits="ZO_CloseButton">
-          <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="0" offsetY="10" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-15" offsetY="15" />
           <OnMouseUp>
             LedgerClose_OnMouseUp(self)
           </OnMouseUp>
@@ -75,7 +79,8 @@
 
         <!-- / -->
 
-        <Label name="$(parent)Title" text="SI_LEDGER_TITLE" color="FFEE66" font="ZoFontHeader2">
+        <Label name="$(parent)Title" text="SI_LEDGER_TITLE" inherits="ZO_WindowTitle">
+          <Dimensions y="32" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="15" offsetY="15" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-15" offsetY="15" />
         </Label>
@@ -84,15 +89,15 @@
 
         <Control name="$(parent)Headers">
           <Dimensions y="32" />
-          <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="10" />
-          <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-12" offsetY="10" />
+          <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="15" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-16" offsetY="15" />
 
           <Controls>
             <Control name="$(parent)Timestamp" inherits="ZO_SortHeader">
-              <Dimensions x="120" y="32" />
+              <Dimensions x="160" y="32" />
               <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
               <OnInitialized>
-                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_TIMESTAMP), "timestamp", ZO_SORT_ORDER_UP, TEXT_ALIGN_LEFT, "ZoFontGameSmall")
+                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_TIMESTAMP), "timestamp", ZO_SORT_ORDER_UP, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
               </OnInitialized>
             </Control>
 
@@ -100,7 +105,7 @@
               <Dimensions x="180" y="32" />
               <Anchor point="TOPLEFT" relativeTo="$(parent)Timestamp" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
               <OnInitialized>
-                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_CHARACTER), "character", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameSmall")
+                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_CHARACTER), "character", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
               </OnInitialized>
             </Control>
 
@@ -108,7 +113,7 @@
               <Dimensions x="120" y="32" />
               <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
               <OnInitialized>
-                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_BALANCE), "balance", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameSmall")
+                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_BALANCE), "balance", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
               </OnInitialized>
             </Control>
 
@@ -116,7 +121,7 @@
               <Dimensions x="120" y="32" />
               <Anchor point="TOPRIGHT" relativeTo="$(parent)Balance" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
               <OnInitialized>
-                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_VARIATION), "variation", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameSmall")
+                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_VARIATION), "variation", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
               </OnInitialized>
             </Control>
 
@@ -125,7 +130,7 @@
               <Anchor point="TOPLEFT" relativeTo="$(parent)Character" relativePoint="TOPRIGHT" offsetX="0" offsetY="0" />
               <Anchor point="TOPRIGHT" relativeTo="$(parent)Variation" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
               <OnInitialized>
-                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_REASON), "reason", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameSmall")
+                ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_REASON), "reason", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
               </OnInitialized>
             </Control>
           </Controls>
@@ -135,7 +140,7 @@
 
         <Control name="$(parent)List" inherits="ZO_ScrollList" >
           <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="0" />
-          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetY="-15" offsetX="-10" />
+          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetY="-15" offsetX="-15" />
         </Control>
       </Controls>
     </TopLevelControl>

@@ -1,40 +1,14 @@
--- Ledger 0.2.0 Sun Aug 30 02:11:24 BRT 2015
--- more on https://github.com/haggen/Ledger
+-- Ledger 1.0.0 Thu Sep 03 20:20:52 BRT 2015
+-- More on https://github.com/haggen/Ledger
 
-local SETTINGS = {
-  w = 720,
-  h = 340,
-  x = (GuiRoot:GetWidth() - 720) / 2,
-  y = (GuiRoot:GetHeight() - 340) / 2,
-  hidden = false,
-  language = GetCVar("Language.2"),
-}
-
-local CACHE = {
-  version     = 2,
-  settings    = SETTINGS,
-  records     = {},
-  filters     = {},
-  characters  = {},
-}
-
-local SORTABLE_KEYS = {
-  timestamp = { isNumeric = true },
-  character = { tiebreaker = "timestamp", caseInsensitive = true },
-  reason    = { tiebreaker = "timestamp", caseInsensitive = true },
-  variation = { tiebreaker = "timestamp", isNumeric = true },
-  balance   = { tiebreaker = "timestamp", isNumeric = true },
-}
-
-local function CreateStrings(language)
-  if langauge == "de" then
-    Ledger_CreateGermanStrings()
-  else
-    Ledger_CreateEnglishStrings()
+-- Find the index of give value in a table
+function table.indexOf(t, value)
+  for i, value in ipairs(t) do
+    if t[i] == value then return i end
   end
-end
 
-CreateStrings(CACHE.langauge)
+  return -1
+end
 
 --
 --
@@ -42,38 +16,67 @@ CreateStrings(CACHE.langauge)
 
 local Ledger = ZO_SortFilterList:Subclass()
 
+LEDGER_WIDTH      = 800
+LEDGER_HEIGHT     = 320
+LEDGER_ROW_HEIGHT = 32
+
+local settings = {
+  w        = LEDGER_WIDTH,
+  h        = LEDGER_HEIGHT,
+  x        = (GuiRoot:GetWidth() - LEDGER_WIDTH) / 2,
+  y        = (GuiRoot:GetHeight() - LEDGER_HEIGHT) / 2,
+  hidden   = false,
+  language = GetCVar("Language.2")
+}
+
+Ledger.defaultCache = {
+  version    = 2,
+  settings   = settings,
+  characters = {},
+  data       = {},
+}
+
+Ledger.sortableKeys = {
+  timestamp = { isNumeric = true },
+  character = { tiebreaker = "timestamp", caseInsensitive = true },
+  reason    = { tiebreaker = "timestamp", caseInsensitive = true },
+  variation = { tiebreaker = "timestamp", isNumeric = true },
+  balance   = { tiebreaker = "timestamp", isNumeric = true },
+}
+
 function Ledger:New(control)
   local this = ZO_SortFilterList.New(self, control)
 
-  ZO_ScrollList_AddDataType(this.list, 1, "LedgerRow", LedgerRow:GetHeight(), function(...) this:SetupRow(...) end)
+  ZO_ScrollList_AddDataType(this.list, 1, "LedgerRow", LEDGER_ROW_HEIGHT, function(...) this:SetupRow(...) end)
   ZO_ScrollList_EnableHighlight(this.list, "ZO_ThinListHighlight")
 
   this:SetAlternateRowBackgrounds(true)
-  this:SetEmptyText(GetString(SI_LEDGER_EMPTY_TEXT))
+  this:SetEmptyText(GetString(SI_LEDGER_EMPTY))
 
-  local setup = function(e, name) this:Setup(name) end
+  local setup = function(e, name) this:Loaded(name) end
   this.control:RegisterForEvent(EVENT_ADD_ON_LOADED, setup)
 
   return this
 end
 
-function Ledger:Setup(name)
+function Ledger:Loaded(name)
   if name ~= "Ledger" then return end
 
-  self.cache = ZO_SavedVars:NewAccountWide("LedgerCache", CACHE.version, nil, CACHE)
-
-  -- Remove when it's safe to assume that everybody upgraded.
-  if self.cache.spreadsheet ~= nil then
-    self.cache.records = self.cache.spreadsheet
-    self.cache.spreadsheet = nil
-  end
+  self.cache = ZO_SavedVars:NewAccountWide("LedgerCache", self.defaultCache.version, nil, self.defaultCache)
 
   local name = GetUnitName("player")
   local fn = function(_, v) return v == name end
-  if Breton_Find(self.cache.characters, fn) == false then
+  if table.indexOf(self.cache.characters, name) < 0 then
     table.insert(self.cache.characters, name)
   end
 
+  -- Remove-me after some time
+  if self.cache.spreadsheet ~= nil then
+    self.cache.data = self.cache.spreadsheet
+    self.cache.spreadsheet = nil
+  end
+
+  self.currentSortOrder = ZO_SORT_ORDER_DOWN
   self.sortHeaderGroup:SelectHeaderByKey("timestamp", ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
 
   self.control:RegisterForEvent(EVENT_MONEY_UPDATE, function(...) self:Update(...) end)
@@ -82,6 +85,7 @@ function Ledger:Setup(name)
   SLASH_COMMANDS["/ledger"] = function() this:Toggle() end
 
   self:Restore()
+  self:Refresh()
 end
 
 function Ledger:Update(e, balance, previously, reason)
@@ -93,7 +97,7 @@ function Ledger:Update(e, balance, previously, reason)
   entry.variation = balance - previously
   entry.balance = balance
 
-  table.insert(self.records, entry)
+  table.insert(self.cache.data, entry)
 
   self:Refresh()
 end
@@ -107,8 +111,8 @@ end
 function Ledger:BuildMasterList()
   self.masterList = {}
 
-  for i = 1, #self.records do
-    local t = ZO_ShallowTableCopy(self.records[i], {})
+  for i = 1, #self.cache.data do
+    local t = ZO_ShallowTableCopy(self.cache.data[i], {})
     table.insert(self.masterList, t)
   end
 end
@@ -139,36 +143,35 @@ function Ledger:SetupRow(control, data)
   ZO_SortFilterList.SetupRow(self, control, data)
 
   local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, self.cache.settings.language)
-  local hue = (data.variation > 0) and ZO_ColorDef:New(0.15, 0.85, .35, 1) or ZO_ColorDef:New(0.85, 0.15, 0.35, 1)
+  local hue = (data.variation > 0) and ZO_ColorDef:New(0.25, 0.95, .85, 1) or ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
+  local plus = data.variation < 0 and '' or '+'
 
   GetControl(control, "Timestamp"):SetText(formattedDateTime)
   GetControl(control, "Character"):SetText(data.character)
-  GetControl(control, "Reason"):SetText(GetString("SI_LEDGER_REASON", t.reason))
+  GetControl(control, "Reason"):SetText(GetString("SI_LEDGER_REASON", data.reason))
   GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
-  GetControl(control, "Variation"):SetText(ZO_CurrencyControl_FormatCurrency(data.variation))
+  GetControl(control, "Variation"):SetText(plus .. ZO_CurrencyControl_FormatCurrency(data.variation))
   GetControl(control, "Variation"):SetColor(hue:UnpackRGBA())
 end
 
 function Ledger:Toggle()
   self.control:ToggleHidden()
-  self.settings.hidden = self.control:IsHidden()
+  self.cache.settings.hidden = self.control:IsHidden()
 end
 
 function Ledger:Restore()
-  CreateStrings(self.cache.language)
-
   self.control:ClearAnchors()
-  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.settings.x, self.settings.y)
-  self.control:SetDimensions(self.settings.w, self.settings.h)
-  self.control:SetHidden(self.settings.hidden)
+  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.cache.settings.x, self.cache.settings.y)
+  self.control:SetDimensions(self.cache.settings.w, self.cache.settings.h)
+  self.control:SetHidden(self.cache.settings.hidden)
 end
 
 function Ledger:Save()
-  self.settings.x = self.control:GetLeft()
-  self.settings.y = self.control:GetTop()
-  self.settings.w = self.control:GetWidth()
-  self.settings.h = self.control:GetHeight()
-  self.settings.hidden = self.control:IsHidden()
+  self.cache.settings.x = self.control:GetLeft()
+  self.cache.settings.y = self.control:GetTop()
+  self.cache.settings.w = self.control:GetWidth()
+  self.cache.settings.h = self.control:GetHeight()
+  self.cache.settings.hidden = self.control:IsHidden()
 end
 
 --
@@ -194,6 +197,6 @@ end
 function Ledger_OnResizeStop()
   LEDGER:Save()
 
-  ZO_ScrollList_SetHeight(self.list, self.list:GetHeight())
-  ZO_ScrollList_Commit(self.list)
+  ZO_ScrollList_SetHeight(LEDGER.list, LEDGER.list:GetHeight())
+  ZO_ScrollList_Commit(LEDGER.list)
 end
