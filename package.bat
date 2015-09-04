@@ -1,5 +1,5 @@
 :: Package your ESO add-on ready for distribution.
-:: Version 1.0 Thu Sep 03 23:09:05 BRT 2015
+:: Version 1.2 Fri Sep 04 12:31:31 BRT 2015
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
@@ -7,32 +7,39 @@ set zip=%ProgramFiles%\7-Zip\7z.exe
 if not exist "%zip%" goto :zipnotfound
 
 for %%* in (.) do set name=%%~nx*
+
+if not exist %name%.txt (
+  echo * Please enter the name of your add-on:
+  set /P name=^>
+)
+
 for /F "tokens=3" %%i in ('findstr /C:"## Version:" %name%.txt') do set version=%%i
 
 set archive=%name%-%version%.zip
 
 echo * Packaging %archive%...
 
-md tmp\%name%
+md .package\%name%
+
+set files=%name%.txt
 
 for /F %%i in ('findstr /B /R "[^#;]" %name%.txt') do (
   set file=%%~nxi
+  set files=!files! !file:$^(language^)=*!
+)
 
-  if !file:$^(language^)^=! == !file! (
-    set files=!file! !files!
-  ) else (
-    set files=!file:$^(language^)=EN! !files!
-    set files=!file:$^(language^)=DE! !files!
-    set files=!file:$^(language^)=FR! !files!
+if exist package.txt (
+  for /F "tokens=*" %%i in (package.txt) do (
+    set files=!files! %%~nxi
   )
 )
 
-robocopy . tmp\%name% %files%%name%.txt /S /XD tmp .git /NJH /NJS /NFL /NDL > nul
+robocopy . .package\%name% %files% /S /XD .* /NJH /NJS /NFL /NDL > nul
 
-cd tmp
+cd .package
 "%zip%" a -tzip -bd ..\%archive% %name% > nul
 cd ..
-rd /S /Q tmp
+rd /S /Q .package
 
 echo * Done^^!
 echo.
