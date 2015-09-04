@@ -1,16 +1,12 @@
--- L10n.lua is a small collection of functions to
--- work with date and time localization in ESO add-ons.
+-- L10n 1.0 Fri Aug 28 20:30:10 BRT 2015
 --
--- Author: Arthur <arthur@corenzan.com>
--- Version: 1.0 (last revision on Fri Aug 28 20:30:10 BRT 2015)
--- More on: ...
---
--- Basic usage:
+-- About:
+-- ...
 --
 -- The most simple use would be calling the function `L10n_GetLocalizedDateTime()`.
 --
--- Say you're running this in New York, which is
--- you would get something like this: "8/28/2015 7:07pm".
+-- Say you're running this in New York, which is UTC-9
+-- you would get something like this: "8/28/2015 7:07 P.M.".
 --
 -- Now if someone did the same in Berlin, using a German
 -- game client, it would be this: "29/8/2015 1:07".
@@ -25,8 +21,8 @@
 --
 -- See more examples:
 --
--- L10n_GetLocalizedDateTime(1440804257, "en") --> "8/28/2015 8:24pm" (UTC-3)
--- L10n_GetLocalizedDateTime(1440804257, "de") --> "28/8/2015 20:24"  (UTC-3)
+-- L10n_GetLocalizedDateTime(1440804257, "en") --> "8/28/2015 8:24 P.M." (in UTC-3)
+-- L10n_GetLocalizedDateTime(1440804257, "de") --> "28/8/2015 20:24" (in UTC-3)
 --
 
 -- Return the difference of your timezone in seconds.
@@ -82,11 +78,15 @@ function L10n_GetLocalizedTime(timestamp, language)
     timestamp = GetTimeStamp()
   end
 
+  local precision
+
   if language == "en" then
-    return ZO_FormatTime(timestamp + L10n_GetTimeZone, TIME_FORMAT_STYLE_CLOCK_TIME, TIME_FORMAT_PRECISION_TWELVE_HOUR)
+    precision = TIME_FORMAT_PRECISION_TWELVE_HOUR
   else
-    return ZO_FormatTime(timestamp + L10n_GetTimeZone, TIME_FORMAT_STYLE_CLOCK_TIME, TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR)
+    precision = TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
   end
+
+  return ZO_FormatTime(timestamp + L10n_GetTimeZone(), TIME_FORMAT_STYLE_CLOCK_TIME, precision)
 end
 
 -- Accepts:
