@@ -1,13 +1,47 @@
--- Ledger 1.0.0 Thu Sep 03 20:20:52 BRT 2015
+-- Ledger 1.0.1 Thu Sep 03 20:20:52 BRT 2015
 -- More on https://github.com/haggen/Ledger
 
--- Find the index of give value in a table
-function table.indexOf(t, value)
-  for i, value in ipairs(t) do
-    if t[i] == value then return i end
+function table.find(t, fn)
+  for k, v in pairs(t) do
+    if fn(k, v) then return k, v end
+  end
+end
+
+function table.filter(t, fn)
+  local ft = {}
+
+  for k, v in pairs(t) do
+    local m, x = fn(k, v, ft)
+
+    if m then table.insert(ft, v) end
+    if x then break end
   end
 
-  return -1
+  return ft
+end
+
+function table.group(t, fn)
+  local gt = {}
+
+  for k, v in pairs(t) do
+    local gk = fn(k, v, gt)
+
+    if gt[gk] then
+      table.insert(gt[gk], v)
+    else
+      gt[gk] = {v}
+    end
+  end
+
+  return gt
+end
+
+function table.reduce(t, n, fn)
+  for k, v in pairs(t) do
+    n = fn(k, v, n, t)
+  end
+
+  return n
 end
 
 --
@@ -15,6 +49,10 @@ end
 --
 
 local Ledger = ZO_SortFilterList:Subclass()
+
+--
+--
+--
 
 LEDGER_WIDTH      = 800
 LEDGER_HEIGHT     = 320
@@ -26,7 +64,7 @@ local settings = {
   x        = (GuiRoot:GetWidth() - LEDGER_WIDTH) / 2,
   y        = (GuiRoot:GetHeight() - LEDGER_HEIGHT) / 2,
   hidden   = false,
-  language = GetCVar("Language.2")
+  language = GetCVar("Language.2"),
 }
 
 Ledger.defaultCache = {
@@ -43,6 +81,10 @@ Ledger.sortableKeys = {
   variation = { tiebreaker = "timestamp", isNumeric = true },
   balance   = { tiebreaker = "timestamp", isNumeric = true },
 }
+
+--
+--
+--
 
 function Ledger:New(control)
   local this = ZO_SortFilterList.New(self, control)
@@ -65,15 +107,8 @@ function Ledger:Loaded(name)
   self.cache = ZO_SavedVars:NewAccountWide("LedgerCache", self.defaultCache.version, nil, self.defaultCache)
 
   local name = GetUnitName("player")
-  local fn = function(_, v) return v == name end
   if table.indexOf(self.cache.characters, name) < 0 then
     table.insert(self.cache.characters, name)
-  end
-
-  -- Remove-me after some time
-  if self.cache.spreadsheet ~= nil then
-    self.cache.data = self.cache.spreadsheet
-    self.cache.spreadsheet = nil
   end
 
   self.currentSortOrder = ZO_SORT_ORDER_DOWN
@@ -102,10 +137,37 @@ function Ledger:Update(e, balance, previously, reason)
   self:Refresh()
 end
 
-function Ledger:Refresh()
-  if not self.control:IsHidden() then
-    self:RefreshData()
+local function filterByRecentTime(reference)
+  return function(_, data)
+    return data.timestamp >= reference
   end
+end
+
+local function groupByVariationSign(_, data)
+  return data.variation >= 0
+end
+
+local function reduceByVariationSum(_, data, total)
+  return total + data.variation
+end
+
+function Ledger:Refresh()
+  if self.control:IsHidden() then return end
+
+  self:RefreshData()
+
+  local lastHour = GetTimeStamp() - 3600
+  local recentData = table.filter(self.cache.data, filterByRecentTime(lastHour))
+  local groupedData = table.group(recentData, groupByVariationSign)
+  local totalIncome = table.reduce(groupedData[true], 0, reduceByVariationSum)
+  local totalExpense = table.reduce(groupedData[false], 0, reduceByVariationSum)
+  local totalVariation = totalExpense + totalIncome
+  local totalHue = totalVariation >= 0 and "40F0E0" or "F04040"
+  local totalSign = totalVariation >= 0 and "+" or ""
+
+  local totalText = "Your balance changed by |c" .. totalHue .. totalHue .. totalVariation .. "|r in the last hour."
+
+  GetControl(control, "Total"):SetText(totalText)
 end
 
 function Ledger:BuildMasterList()
@@ -113,6 +175,7 @@ function Ledger:BuildMasterList()
 
   for i = 1, #self.cache.data do
     local t = ZO_ShallowTableCopy(self.cache.data[i], {})
+    t.reason = GetString("SI_LEDGER_REASON", t.reason)
     table.insert(self.masterList, t)
   end
 end
@@ -136,22 +199,26 @@ function Ledger:CompareRows(a, b)
 end
 
 function Ledger:GetRowColors(data, mouseIsOver, control)
-  return ZO_ColorDef:New(0.9, 0.9, 0.9, 1)
+  return ZO_ColorDef:New(1, 1, 1, 1)
 end
 
 function Ledger:SetupRow(control, data)
   ZO_SortFilterList.SetupRow(self, control, data)
 
   local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, self.cache.settings.language)
-  local hue = (data.variation > 0) and ZO_ColorDef:New(0.25, 0.95, .85, 1) or ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
-  local plus = data.variation < 0 and '' or '+'
+
+  if data.variation >= 0 then
+    local sign, hue = "+", ZO_ColorDef:New(0.25, 0.95, 0.85, 1)
+  else
+    local sign, hue = "", ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
+  end
 
   GetControl(control, "Timestamp"):SetText(formattedDateTime)
   GetControl(control, "Character"):SetText(data.character)
-  GetControl(control, "Reason"):SetText(GetString("SI_LEDGER_REASON", data.reason))
-  GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
-  GetControl(control, "Variation"):SetText(plus .. ZO_CurrencyControl_FormatCurrency(data.variation))
+  GetControl(control, "Reason"):SetText(data.reason)
+  GetControl(control, "Variation"):SetText(sign .. ZO_CurrencyControl_FormatCurrency(data.variation))
   GetControl(control, "Variation"):SetColor(hue:UnpackRGBA())
+  GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
 end
 
 function Ledger:Toggle()
