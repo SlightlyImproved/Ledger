@@ -20,6 +20,16 @@ function table.filter(t, fn)
   return ft
 end
 
+function table.map(t, fn)
+  local mt = {}
+
+  for k, v in pairs(t) do
+    mt[k] = fn(k, v, mt)
+  end
+
+  return mt
+end
+
 function table.group(t, fn)
   local gt = {}
 
@@ -70,6 +80,7 @@ local settings = {
 Ledger.defaultCache = {
   version    = 2,
   settings   = settings,
+  filters    = {},
   characters = {},
   data       = {},
 }
@@ -80,6 +91,17 @@ Ledger.sortableKeys = {
   reason    = { tiebreaker = "timestamp", caseInsensitive = true },
   variation = { tiebreaker = "timestamp", isNumeric = true },
   balance   = { tiebreaker = "timestamp", isNumeric = true },
+}
+
+Ledger.filterOptions = {
+  timeFrame = {
+    [1] = 3600 * 24,
+    [2] = 3600 * 24 * 7,
+    [3] = 3600 * 24 * 30,
+  },
+  character = {
+    [1] = false
+  },
 }
 
 --
@@ -95,8 +117,18 @@ function Ledger:New(control)
   this:SetAlternateRowBackgrounds(true)
   this:SetEmptyText(GetString(SI_LEDGER_EMPTY))
 
+  this.timeFrameComboBox = ZO_ComboBox_ObjectFromContainer(GetControl(control, "FiltersTimeFrame"))
+  this.timeFrameComboBox:SetSortsItems(false)
+  this.timeFrameComboBox:SetFont("LedgerRowFont")
+  this.timeFrameComboBox:SetSpacing(2)
+
+  this.characterComboBox = ZO_ComboBox_ObjectFromContainer(GetControl(control, "FiltersCharacter"))
+  this.characterComboBox:SetSortsItems(false)
+  this.characterComboBox:SetFont("LedgerRowFont")
+  this.characterComboBox:SetSpacing(2)
+
   local setup = function(e, name) this:Loaded(name) end
-  this.control:RegisterForEvent(EVENT_ADD_ON_LOADED, setup)
+  control:RegisterForEvent(EVENT_ADD_ON_LOADED, setup)
 
   return this
 end
@@ -106,10 +138,31 @@ function Ledger:Loaded(name)
 
   self.cache = ZO_SavedVars:NewAccountWide("LedgerCache", self.defaultCache.version, nil, self.defaultCache)
 
+  self:PreventRefresh()
+
   local name = GetUnitName("player")
-  if table.indexOf(self.cache.characters, name) < 0 then
+
+  if not table.find(self.cache.characters, function(_, n) return n == name end) then
     table.insert(self.cache.characters, name)
   end
+
+  for _, name in ipairs(self.cache.characters) do
+    table.insert(self.filterOptions.character, name)
+  end
+
+  for i, value in ipairs(self.filterOptions.timeFrame) do
+    local name = GetString("SI_LEDGER_TIME_FRAME_OPTION", i)
+    local callback = function() self:UpdateFilter("timeFrame", i) end
+    self.timeFrameComboBox:AddItem(self.timeFrameComboBox:CreateItemEntry(name, callback))
+  end
+  self.timeFrameComboBox:SelectItemByIndex(self.cache.filters.timeFrame or 1)
+
+  for i, value in ipairs(self.filterOptions.character) do
+    local name = i > 1 and value or GetString("SI_LEDGER_CHARACTER_OPTION", i)
+    local callback = function() self:UpdateFilter("character", i) end
+    self.characterComboBox:AddItem(self.characterComboBox:CreateItemEntry(name, callback))
+  end
+  self.characterComboBox:SelectItemByIndex(self.cache.filters.timeFrame or 1)
 
   self.currentSortOrder = ZO_SORT_ORDER_DOWN
   self.sortHeaderGroup:SelectHeaderByKey("timestamp", ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
@@ -119,6 +172,7 @@ function Ledger:Loaded(name)
 
   SLASH_COMMANDS["/ledger"] = function() this:Toggle() end
 
+  self:AllowRefresh()
   self:Restore()
   self:Refresh()
 end
@@ -137,37 +191,24 @@ function Ledger:Update(e, balance, previously, reason)
   self:Refresh()
 end
 
-local function filterByRecentTime(reference)
-  return function(_, data)
-    return data.timestamp >= reference
-  end
+function Ledger:PreventRefresh()
+  self.preventRefresh = true
 end
 
-local function groupByVariationSign(_, data)
-  return data.variation >= 0
-end
-
-local function reduceByVariationSum(_, data, total)
-  return total + data.variation
+function Ledger:AllowRefresh()
+  self.preventRefresh = nil
 end
 
 function Ledger:Refresh()
+  if self.preventRefresh then return end
   if self.control:IsHidden() then return end
 
   self:RefreshData()
+end
 
-  local lastHour = GetTimeStamp() - 3600
-  local recentData = table.filter(self.cache.data, filterByRecentTime(lastHour))
-  local groupedData = table.group(recentData, groupByVariationSign)
-  local totalIncome = table.reduce(groupedData[true], 0, reduceByVariationSum)
-  local totalExpense = table.reduce(groupedData[false], 0, reduceByVariationSum)
-  local totalVariation = totalExpense + totalIncome
-  local totalHue = totalVariation >= 0 and "40F0E0" or "F04040"
-  local totalSign = totalVariation >= 0 and "+" or ""
-
-  local totalText = "Your balance changed by |c" .. totalHue .. totalHue .. totalVariation .. "|r in the last hour."
-
-  GetControl(control, "Total"):SetText(totalText)
+function Ledger:UpdateFilter(filter, value)
+  self.cache.filters[filter] = value
+  self:Refresh()
 end
 
 function Ledger:BuildMasterList()
@@ -184,8 +225,19 @@ function Ledger:FilterScrollList()
   local scrollData = ZO_ScrollList_GetDataList(self.list)
   ZO_ClearNumericallyIndexedTable(scrollData)
 
+  local timeFrame = GetTimeStamp() - self.filterOptions.timeFrame[self.cache.filters.timeFrame]
+  local character = self.filterOptions.character[self.cache.filters.character]
+
   for i = 1, #self.masterList do
-    table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, self.masterList[i]))
+    local entry = self.masterList[i]
+    local match = true
+
+    match = match and (character == false or character == entry.character)
+    match = match and entry.timestamp >= timeFrame
+
+    if match then
+      table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, entry))
+    end
   end
 end
 
@@ -206,11 +258,12 @@ function Ledger:SetupRow(control, data)
   ZO_SortFilterList.SetupRow(self, control, data)
 
   local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, self.cache.settings.language)
+  local sign, hue = ""
 
   if data.variation >= 0 then
-    local sign, hue = "+", ZO_ColorDef:New(0.25, 0.95, 0.85, 1)
+    sign, hue = "+", ZO_ColorDef:New(0.25, 0.95, 0.85, 1)
   else
-    local sign, hue = "", ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
+    hue = ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
   end
 
   GetControl(control, "Timestamp"):SetText(formattedDateTime)

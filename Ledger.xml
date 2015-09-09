@@ -87,10 +87,31 @@
 
         <!-- / -->
 
+        <Control name="$(parent)Filters">
+          <Dimensions y="32" />
+
+          <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="20" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="0" offsetY="20" />
+
+          <Controls>
+            <Control name="$(parent)TimeFrame" inherits="ZO_ComboBox">
+              <Dimensions x="170"/>
+              <Anchor point="LEFT" relativeTo="$(parent)" relativePoint="LEFT" offsetX="0" offsetY="0" />
+            </Control>
+            <Control name="$(parent)Character" inherits="ZO_ComboBox">
+              <Dimensions x="270"/>
+              <Anchor point="LEFT" relativeTo="$(parent)TimeFrame" relativePoint="RIGHT" offsetX="10" offsetY="0" />
+            </Control>
+          </Controls>
+        </Control>
+
+        <!-- / -->
+
         <Control name="$(parent)Headers">
           <Dimensions y="32" />
-          <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="15" />
-          <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-16" offsetY="15" />
+
+          <Anchor point="TOPLEFT" relativeTo="$(parent)Filters" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="10" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)Filters" relativePoint="BOTTOMRIGHT" offsetX="0" offsetY="10" />
 
           <Controls>
             <Control name="$(parent)Timestamp" inherits="ZO_SortHeader">
@@ -118,7 +139,7 @@
             </Control>
 
             <Control name="$(parent)Variation" inherits="ZO_SortHeader">
-              <Dimensions x="120" y="32" />
+              <Dimensions x="136" y="32" />
               <Anchor point="TOPRIGHT" relativeTo="$(parent)Balance" relativePoint="TOPLEFT" offsetX="0" offsetY="0" />
               <OnInitialized>
                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_VARIATION), "variation", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
@@ -140,16 +161,8 @@
 
         <Control name="$(parent)List" inherits="ZO_ScrollList" >
           <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="0" />
-          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Total" relativePoint="BOTTOMRIGHT" offsetY="-15" offsetX="-15" />
+          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetX="-15" offsetY="-15" />
         </Control>
-
-        <!-- / -->
-
-        <Label name="$(parent)Total" inherits="LedgerRowLabel">
-          <Dimensions y="32" />
-          <Anchor point="BOTTOMLEFT" relativeTo="$(parent)" relativePoint="BOTTOMLEFT" offsetY="-15" offsetX="15" />
-          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetY="-15" offsetX="-15" />
-        </Label>
       </Controls>
     </TopLevelControl>
   </Controls>

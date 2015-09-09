@@ -70,9 +70,15 @@ end
 ZO_CreateStringId("SI_BINDING_NAME_LEDGER_TOGGLE"   , "Open/close Ledger")
 
 ZO_CreateStringId("SI_LEDGER_TITLE"                 , "Ledger")
-ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "Nothing here yet, go spend your hard earned money!")
+ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "No records found.")
 ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP"      , "Timestamp")
 ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Character")
 ZO_CreateStringId("SI_LEDGER_HEADER_REASON"         , "Reason")
 ZO_CreateStringId("SI_LEDGER_HEADER_VARIATION"      , "Variation")
 ZO_CreateStringId("SI_LEDGER_HEADER_BALANCE"        , "Balance")
+
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION1"    , "Last 1 day")
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION2"    , "Last 1 week")
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION3"    , "Last 1 month")
+
+ZO_CreateStringId("SI_LEDGER_CHARACTER_OPTION1"    , "All characters")
