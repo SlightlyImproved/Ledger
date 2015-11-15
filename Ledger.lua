@@ -1,4 +1,4 @@
--- Ledger 1.2.0 Nov 14 2015 21:38:14 GMT
+-- Ledger 1.3.0 Nov 15 2015 21:13:45 GMT
 -- More on https://github.com/haggen/Ledger
 
 local Ledger = ZO_SortFilterList:Subclass()
@@ -7,6 +7,7 @@ local Ledger = ZO_SortFilterList:Subclass()
 --
 --
 
+LEDGER_MAINTAINER = "@eolhain"
 LEDGER_WINDOW_WIDTH = 800
 LEDGER_WINDOW_HEIGHT = 460
 LEDGER_ROW_HEIGHT = 32
@@ -72,6 +73,8 @@ local CHARACTER_FILTER_OPTIONS = {
   }
 }
 
+local MERGE_ENTRY_THRESHOLD = 300
+
 --
 --
 --
@@ -102,11 +105,6 @@ function Ledger:New(control)
     LEDGER_CACHE = ZO_SavedVars:NewAccountWide("LedgerCache", DEFAULT_CACHE.version, nil, DEFAULT_CACHE)
 
     LEDGER_FRAGMENT:SetHiddenForReason("isHidden", LEDGER_CACHE.isHidden)
-
-    if LEDGER_CACHE.isHidden then
-      LEDGER_FRAGMENT:Hide()
-    else
-    end
 
     if #LEDGER_CACHE.data == 0 then
       manager:SetEmptyText(GetString(SI_LEDGER_EMPTY_DATA))
@@ -182,15 +180,15 @@ function Ledger:UpdateFilterOptions()
 end
 
 function Ledger:OnMoneyUpdate(e, balance, previously, reason)
-  local entry = {}
+  local newEntry = {}
 
-  entry.timestamp = GetTimeStamp()
-  entry.character = GetUnitName("player")
-  entry.reason = reason
-  entry.variation = balance - previously
-  entry.balance = balance
+  newEntry.timestamp = GetTimeStamp()
+  newEntry.character = GetUnitName("player")
+  newEntry.reason = reason
+  newEntry.variation = balance - previously
+  newEntry.balance = balance
 
-  table.insert(LEDGER_CACHE.data, entry)
+  table.insert(LEDGER_CACHE.data, newEntry)
 
   self:Refresh()
 end
@@ -209,10 +207,29 @@ end
 function Ledger:BuildMasterList()
   self.masterList = {}
 
+  local currentEntry = nil
+
   for i = 1, #LEDGER_CACHE.data do
-    local t = ZO_ShallowTableCopy(LEDGER_CACHE.data[i], {})
-    t.reason = GetString("SI_LEDGER_REASON", t.reason)
-    table.insert(self.masterList, t)
+    local previousEntry = currentEntry
+
+    currentEntry = ZO_ShallowTableCopy(LEDGER_CACHE.data[i], {})
+    currentEntry.reason = GetString("SI_LEDGER_REASON", currentEntry.reason)
+
+    local withinThreshold = false
+    local sameReason = false
+
+    if previousEntry then
+      withinThreshold = currentEntry.timestamp <= (previousEntry.timestamp + MERGE_ENTRY_THRESHOLD)
+      sameReason = currentEntry.reason == previousEntry.reason
+    end
+
+    if withinThreshold and sameReason then
+      previousEntry.variation = previousEntry.variation + currentEntry.variation
+      previousEntry.balance = currentEntry.balance
+      previousEntry.repeated = (previousEntry.repeated or 1) + 1
+    else
+      table.insert(self.masterList, currentEntry)
+    end
   end
 end
 
@@ -263,7 +280,7 @@ function Ledger:SetupRow(control, data)
 
   GetControl(control, "Timestamp"):SetText(formattedDateTime)
   GetControl(control, "Character"):SetText(data.character)
-  GetControl(control, "Reason"):SetText(data.reason)
+  GetControl(control, "Reason"):SetText(data.reason .. (data.repeated and zo_strformat(" (<<1>>)", data.repeated) or ""))
   GetControl(control, "Variation"):SetText(sign .. ZO_CurrencyControl_FormatCurrency(data.variation))
   GetControl(control, "Variation"):SetColor(hue:UnpackRGBA())
   GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))

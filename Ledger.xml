@@ -1,5 +1,6 @@
 <GuiXml>
   <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|soft-shadow-thick" />
+  <Font name="LedgerFeedbackFont" font="$(BOLD_FONT)|14|shadow" />
   <Controls>
     <Label name="LedgerRowLabel" font="LedgerRowFont" inheritAlpha="true" verticalAlignment="CENTER" horizontalAlignment="LEFT" wrapMode="ELLIPSIS" virtual="true" />
 
@@ -40,7 +41,7 @@
 
     <!-- / -->
 
-    <TopLevelControl movable="true" mouseEnabled="true" name="Ledger" resizeHandleSize="5">
+    <TopLevelControl movable="true" mouseEnabled="true" name="Ledger" resizeHandleSize="5" hidden="true">
       <Dimensions x="LEDGER_WINDOW_WIDTH" y="LEDGER_WINDOW_HEIGHT" />
       <DimensionConstraints minX="LEDGER_WINDOW_WIDTH" minY="LEDGER_WINDOW_HEIGHT" />
       <Anchor point="CENTER" />
@@ -70,15 +71,34 @@
 
         <Button name="$(parent)Close" inherits="ZO_CloseButton">
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-15" offsetY="15" />
-          <OnMouseUp>
+          <OnClicked>
             LedgerClose_OnMouseUp(self)
-          </OnMouseUp>
+          </OnClicked>
+        </Button>
+
+        <!-- / -->
+
+        <Button name="$(parent)Feedback" inherits="ZO_DefaultTextButton" text="SI_LEDGER_FEEDBACK" font="LedgerFeedbackFont">
+          <Dimensions x="80" y="24" />
+          <Anchor point="TOPRIGHT" relativeTo="$(parent)Close" relativePoint="TOPLEFT" offsetX="-20" offsetY="-2" />
+
+          <OnClicked>
+            MAIL_SEND:ComposeMailTo(LEDGER_MAINTAINER)
+            d(GetString(SI_LEDGER_FEEDBACK_THANK))
+          </OnClicked>
+
+          <FontColors
+            normalColor="AA66FF"
+            pressedColor="FFFFFF"
+            mouseOverColor="CC88FF"
+            disabledColor="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED"
+          />
         </Button>
 
         <!-- / -->
 
         <Label name="$(parent)Title" text="SI_LEDGER_TITLE" inherits="ZO_WindowTitle">
-          <Dimensions y="32" />
+          <Dimensions y="42" />
           <Anchor point="TOPLEFT" relativeTo="$(parent)" relativePoint="TOPLEFT" offsetX="15" offsetY="15" />
           <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-15" offsetY="15" />
         </Label>
@@ -159,7 +179,7 @@
 
         <Control name="$(parent)List" inherits="ZO_ScrollList" >
           <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" offsetX="0" offsetY="0" />
-          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetX="-10" offsetY="-15" />
+          <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOMRIGHT" offsetX="-11" offsetY="-15" />
         </Control>
       </Controls>
     </TopLevelControl>
