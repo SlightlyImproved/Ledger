@@ -1,7 +1,7 @@
-## APIVersion: 100012
+## APIVersion: 100013
 ## Title: Ledger
 ## Description: Keep tabs on your money.
-## Version: 1.0.0
+## Version: 1.2.0
 ## Author: Arthur
 ## License: CC-BY-NC-SA-4.0
 ## SavedVariables: LedgerCache

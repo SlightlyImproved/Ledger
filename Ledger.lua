@@ -1,62 +1,5 @@
--- Ledger 1.0.1 Thu Sep 03 20:20:52 BRT 2015
+-- Ledger 1.2.0 Nov 14 2015 21:38:14 GMT
 -- More on https://github.com/haggen/Ledger
-
-function table.find(t, fn)
-  for k, v in pairs(t) do
-    if fn(k, v) then return k, v end
-  end
-end
-
-function table.filter(t, fn)
-  local ft = {}
-
-  for k, v in pairs(t) do
-    local m, x = fn(k, v, ft)
-
-    if m then table.insert(ft, v) end
-    if x then break end
-  end
-
-  return ft
-end
-
-function table.map(t, fn)
-  local mt = {}
-
-  for k, v in pairs(t) do
-    mt[k] = fn(k, v, mt)
-  end
-
-  return mt
-end
-
-function table.group(t, fn)
-  local gt = {}
-
-  for k, v in pairs(t) do
-    local gk = fn(k, v, gt)
-
-    if gt[gk] then
-      table.insert(gt[gk], v)
-    else
-      gt[gk] = {v}
-    end
-  end
-
-  return gt
-end
-
-function table.reduce(t, n, fn)
-  for k, v in pairs(t) do
-    n = fn(k, v, n, t)
-  end
-
-  return n
-end
-
---
---
---
 
 local Ledger = ZO_SortFilterList:Subclass()
 
@@ -64,44 +7,69 @@ local Ledger = ZO_SortFilterList:Subclass()
 --
 --
 
-LEDGER_WIDTH      = 800
-LEDGER_HEIGHT     = 320
+LEDGER_WINDOW_WIDTH = 800
+LEDGER_WINDOW_HEIGHT = 460
 LEDGER_ROW_HEIGHT = 32
+LEDGER_ROW_DATA = 1
 
-local settings = {
-  w        = LEDGER_WIDTH,
-  h        = LEDGER_HEIGHT,
-  x        = (GuiRoot:GetWidth() - LEDGER_WIDTH) / 2,
-  y        = (GuiRoot:GetHeight() - LEDGER_HEIGHT) / 2,
-  hidden   = false,
+local DEFAULT_CACHE = {
+  version = 2,
+  width = LEDGER_WINDOW_WIDTH,
+  height = LEDGER_WINDOW_HEIGHT,
+  offsetX = (GuiRoot:GetWidth() - LEDGER_WINDOW_WIDTH) / 2,
+  offsetY = (GuiRoot:GetHeight() - LEDGER_WINDOW_HEIGHT) / 2,
+  isHidden = false,
   language = GetCVar("Language.2"),
-}
-
-Ledger.defaultCache = {
-  version    = 2,
-  settings   = settings,
-  filters    = {},
+  filters = {
+    timeFrame = 1,
+    character = 1,
+  },
   characters = {},
-  data       = {},
+  data = {},
 }
 
-Ledger.sortableKeys = {
-  timestamp = { isNumeric = true },
-  character = { tiebreaker = "timestamp", caseInsensitive = true },
-  reason    = { tiebreaker = "timestamp", caseInsensitive = true },
-  variation = { tiebreaker = "timestamp", isNumeric = true },
-  balance   = { tiebreaker = "timestamp", isNumeric = true },
-}
-
-Ledger.filterOptions = {
-  timeFrame = {
-    [1] = 3600 * 24,
-    [2] = 3600 * 24 * 7,
-    [3] = 3600 * 24 * 30,
+local SORT_KEYS = {
+  timestamp = {
+    isNumeric = true
   },
   character = {
-    [1] = false
+    caseInsensitive = true,
+    tiebreaker = "timestamp",
   },
+  reason = {
+    caseInsensitive = true,
+    tiebreaker = "timestamp",
+  },
+  variation = {
+    isNumeric = true,
+    tiebreaker = "timestamp",
+  },
+  balance = {
+    isNumeric = true,
+    tiebreaker = "timestamp",
+  },
+}
+
+local TIME_FRAME_FILTER_OPTIONS = {
+  [1] = {
+    label = GetString(SI_LEDGER_TIME_FRAME_1_DAY),
+    value = 3600 * 24 * 1
+  },
+  [2] = {
+    label = GetString(SI_LEDGER_TIME_FRAME_1_WEEK),
+    value = 3600 * 24 * 7
+  },
+  [3] = {
+    label = GetString(SI_LEDGER_TIME_FRAME_1_MONTH),
+    value = 3600 * 24 * 30
+  },
+}
+
+local CHARACTER_FILTER_OPTIONS = {
+  [1] = {
+    label = GetString(SI_LEDGER_ALL_CHARACTERS),
+    value = false
+  }
 }
 
 --
@@ -109,75 +77,111 @@ Ledger.filterOptions = {
 --
 
 function Ledger:New(control)
-  local this = ZO_SortFilterList.New(self, control)
+  local manager = ZO_SortFilterList.New(self, control)
 
-  ZO_ScrollList_AddDataType(this.list, 1, "LedgerRow", LEDGER_ROW_HEIGHT, function(...) this:SetupRow(...) end)
-  ZO_ScrollList_EnableHighlight(this.list, "ZO_ThinListHighlight")
+  ZO_ScrollList_AddDataType(manager.list, LEDGER_ROW_DATA, "LedgerRow", LEDGER_ROW_HEIGHT, function(...) manager:SetupRow(...) end)
 
-  this:SetAlternateRowBackgrounds(true)
-  this:SetEmptyText(GetString(SI_LEDGER_EMPTY))
+  manager:SetAlternateRowBackgrounds(true)
 
-  this.timeFrameComboBox = ZO_ComboBox_ObjectFromContainer(GetControl(control, "FiltersTimeFrame"))
-  this.timeFrameComboBox:SetSortsItems(false)
-  this.timeFrameComboBox:SetFont("LedgerRowFont")
-  this.timeFrameComboBox:SetSpacing(2)
+  manager.sortHeaderGroup:SelectHeaderByKey("timestamp")
+  manager.sortHeaderGroup:SelectHeaderByKey("timestamp")
 
-  this.characterComboBox = ZO_ComboBox_ObjectFromContainer(GetControl(control, "FiltersCharacter"))
-  this.characterComboBox:SetSortsItems(false)
-  this.characterComboBox:SetFont("LedgerRowFont")
-  this.characterComboBox:SetSpacing(2)
+  manager.timeFrameComboBox = manager:SetupComboBox("FiltersTimeFrame")
+  manager.characterComboBox = manager:SetupComboBox("FiltersCharacter")
 
-  local setup = function(e, name) this:Loaded(name) end
-  control:RegisterForEvent(EVENT_ADD_ON_LOADED, setup)
+  LEDGER_FRAGMENT = ZO_HUDFadeSceneFragment:New(control, DEFAULT_HUD_DURATION, 50)
 
-  return this
+  HUD_SCENE:AddFragment(LEDGER_FRAGMENT)
+  HUD_UI_SCENE:AddFragment(LEDGER_FRAGMENT)
+
+  SLASH_COMMANDS["/ledger"] = function() manager:Toggle() end
+
+  local function OnAddOnLoaded(e, name)
+    if name ~= "Ledger" then return end
+
+    LEDGER_CACHE = ZO_SavedVars:NewAccountWide("LedgerCache", DEFAULT_CACHE.version, nil, DEFAULT_CACHE)
+
+    LEDGER_FRAGMENT:SetHiddenForReason("isHidden", LEDGER_CACHE.isHidden)
+
+    if LEDGER_CACHE.isHidden then
+      LEDGER_FRAGMENT:Hide()
+    else
+    end
+
+    if #LEDGER_CACHE.data == 0 then
+      manager:SetEmptyText(GetString(SI_LEDGER_EMPTY_DATA))
+    else
+      manager:SetEmptyText(GetString(SI_LEDGER_EMPTY_FILTER))
+    end
+
+    if LEDGER_CACHE.settings ~= nil then
+      LEDGER_CACHE.settings = nil
+      LEDGER_CACHE.width = DEFAULT_CACHE.width
+      LEDGER_CACHE.height = DEFAULT_CACHE.height
+      LEDGER_CACHE.offsetX = DEFAULT_CACHE.offsetX
+      LEDGER_CACHE.offsetY = DEFAULT_CACHE.offsetY
+      LEDGER_CACHE.isHidden = DEFAULT_CACHE.isHidden
+    end
+
+    manager:RegisterCharacter(GetUnitName("player"))
+    manager:UpdateFilterOptions()
+
+    manager:Restore()
+    manager:Refresh()
+
+    control:RegisterForEvent(EVENT_MONEY_UPDATE, function(...) manager:OnMoneyUpdate(...) end)
+    control:RegisterForEvent(EVENT_PLAYER_COMBAT_STATE, function(e, inCombat) if inCombat then manager:Hide() end end)
+    control:UnregisterForEvent(EVENT_ADD_ON_LOADED)
+  end
+
+  control:RegisterForEvent(EVENT_ADD_ON_LOADED, OnAddOnLoaded)
+
+  return manager
 end
 
-function Ledger:Loaded(name)
-  if name ~= "Ledger" then return end
-
-  self.cache = ZO_SavedVars:NewAccountWide("LedgerCache", self.defaultCache.version, nil, self.defaultCache)
-
-  self:PreventRefresh()
-
-  local name = GetUnitName("player")
-
-  if not table.find(self.cache.characters, function(_, n) return n == name end) then
-    table.insert(self.cache.characters, name)
-  end
-
-  for _, name in ipairs(self.cache.characters) do
-    table.insert(self.filterOptions.character, name)
-  end
-
-  for i, value in ipairs(self.filterOptions.timeFrame) do
-    local name = GetString("SI_LEDGER_TIME_FRAME_OPTION", i)
-    local callback = function() self:UpdateFilter("timeFrame", i) end
-    self.timeFrameComboBox:AddItem(self.timeFrameComboBox:CreateItemEntry(name, callback))
-  end
-  self.timeFrameComboBox:SelectItemByIndex(self.cache.filters.timeFrame or 1)
-
-  for i, value in ipairs(self.filterOptions.character) do
-    local name = i > 1 and value or GetString("SI_LEDGER_CHARACTER_OPTION", i)
-    local callback = function() self:UpdateFilter("character", i) end
-    self.characterComboBox:AddItem(self.characterComboBox:CreateItemEntry(name, callback))
-  end
-  self.characterComboBox:SelectItemByIndex(self.cache.filters.timeFrame or 1)
-
-  self.currentSortOrder = ZO_SORT_ORDER_DOWN
-  self.sortHeaderGroup:SelectHeaderByKey("timestamp", ZO_SortHeaderGroup.SUPPRESS_CALLBACKS)
-
-  self.control:RegisterForEvent(EVENT_MONEY_UPDATE, function(...) self:Update(...) end)
-  self.control:UnregisterForEvent(EVENT_ADD_ON_LOADED)
-
-  SLASH_COMMANDS["/ledger"] = function() this:Toggle() end
-
-  self:AllowRefresh()
-  self:Restore()
-  self:Refresh()
+function Ledger:SetupComboBox(name)
+  local comboBox = ZO_ComboBox_ObjectFromContainer(GetControl(self.control, name))
+  comboBox:SetSortsItems(false)
+  comboBox:SetFont("LedgerRowFont")
+  comboBox:SetSpacing(2)
+  return comboBox
 end
 
-function Ledger:Update(e, balance, previously, reason)
+function Ledger:RegisterCharacter(name)
+  for i = 1, #LEDGER_CACHE.characters do
+    if LEDGER_CACHE.characters[i] == name then
+      name = nil
+    end
+  end
+
+  if name then table.insert(LEDGER_CACHE.characters, name) end
+end
+
+function Ledger:UpdateFilterOptions()
+  for i = 1, #LEDGER_CACHE.characters do
+    table.insert(CHARACTER_FILTER_OPTIONS, {
+      label = LEDGER_CACHE.characters[i],
+      value = LEDGER_CACHE.characters[i],
+    })
+  end
+
+  for index, option in ipairs(TIME_FRAME_FILTER_OPTIONS) do
+    d(index, option)
+    local callback = function() self:UpdateFilter("timeFrame", index) end
+    self.timeFrameComboBox:AddItem(self.timeFrameComboBox:CreateItemEntry(option.label, callback))
+  end
+
+  self.timeFrameComboBox:SelectItemByIndex(LEDGER_CACHE.filters.timeFrame or 1)
+
+  for index, option in ipairs(CHARACTER_FILTER_OPTIONS) do
+    local callback = function() self:UpdateFilter("character", index) end
+    self.characterComboBox:AddItem(self.characterComboBox:CreateItemEntry(option.label, callback))
+  end
+
+  self.characterComboBox:SelectItemByIndex(LEDGER_CACHE.filters.character or 1)
+end
+
+function Ledger:OnMoneyUpdate(e, balance, previously, reason)
   local entry = {}
 
   entry.timestamp = GetTimeStamp()
@@ -186,36 +190,27 @@ function Ledger:Update(e, balance, previously, reason)
   entry.variation = balance - previously
   entry.balance = balance
 
-  table.insert(self.cache.data, entry)
+  table.insert(LEDGER_CACHE.data, entry)
 
   self:Refresh()
 end
 
-function Ledger:PreventRefresh()
-  self.preventRefresh = true
-end
-
-function Ledger:AllowRefresh()
-  self.preventRefresh = nil
-end
-
 function Ledger:Refresh()
-  if self.preventRefresh then return end
-  if self.control:IsHidden() then return end
-
-  self:RefreshData()
+  if not LEDGER_CACHE.isHidden then
+    self:RefreshData()
+  end
 end
 
-function Ledger:UpdateFilter(filter, value)
-  self.cache.filters[filter] = value
+function Ledger:UpdateFilter(filter, index)
+  LEDGER_CACHE.filters[filter] = index
   self:Refresh()
 end
 
 function Ledger:BuildMasterList()
   self.masterList = {}
 
-  for i = 1, #self.cache.data do
-    local t = ZO_ShallowTableCopy(self.cache.data[i], {})
+  for i = 1, #LEDGER_CACHE.data do
+    local t = ZO_ShallowTableCopy(LEDGER_CACHE.data[i], {})
     t.reason = GetString("SI_LEDGER_REASON", t.reason)
     table.insert(self.masterList, t)
   end
@@ -225,8 +220,8 @@ function Ledger:FilterScrollList()
   local scrollData = ZO_ScrollList_GetDataList(self.list)
   ZO_ClearNumericallyIndexedTable(scrollData)
 
-  local timeFrame = GetTimeStamp() - self.filterOptions.timeFrame[self.cache.filters.timeFrame]
-  local character = self.filterOptions.character[self.cache.filters.character]
+  local timeFrame = GetTimeStamp() - TIME_FRAME_FILTER_OPTIONS[LEDGER_CACHE.filters.timeFrame].value
+  local character = CHARACTER_FILTER_OPTIONS[LEDGER_CACHE.filters.character].value
 
   for i = 1, #self.masterList do
     local entry = self.masterList[i]
@@ -236,7 +231,7 @@ function Ledger:FilterScrollList()
     match = match and entry.timestamp >= timeFrame
 
     if match then
-      table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, entry))
+      table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LEDGER_ROW_DATA, entry))
     end
   end
 end
@@ -247,7 +242,7 @@ function Ledger:SortScrollList()
 end
 
 function Ledger:CompareRows(a, b)
-  return ZO_TableOrderingFunction(a.data, b.data, self.currentSortKey, self.sortableKeys, self.currentSortOrder)
+  return ZO_TableOrderingFunction(a.data, b.data, self.currentSortKey, SORT_KEYS, self.currentSortOrder)
 end
 
 function Ledger:GetRowColors(data, mouseIsOver, control)
@@ -257,7 +252,7 @@ end
 function Ledger:SetupRow(control, data)
   ZO_SortFilterList.SetupRow(self, control, data)
 
-  local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, self.cache.settings.language)
+  local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, LEDGER_CACHE.language)
   local sign, hue = ""
 
   if data.variation >= 0 then
@@ -275,23 +270,38 @@ function Ledger:SetupRow(control, data)
 end
 
 function Ledger:Toggle()
-  self.control:ToggleHidden()
-  self.cache.settings.hidden = self.control:IsHidden()
+  if LEDGER_CACHE.isHidden then
+    self:Show()
+  else
+    self:Hide()
+  end
+end
+
+function Ledger:Show()
+  LEDGER_CACHE.isHidden = false
+  LEDGER_FRAGMENT:SetHiddenForReason("isHidden", false)
+
+  if not IsGameCameraUIModeActive() then
+    SetGameCameraUIMode(true)
+  end
+end
+
+function Ledger:Hide()
+  LEDGER_CACHE.isHidden = true
+  LEDGER_FRAGMENT:SetHiddenForReason("isHidden", true)
 end
 
 function Ledger:Restore()
   self.control:ClearAnchors()
-  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.cache.settings.x, self.cache.settings.y)
-  self.control:SetDimensions(self.cache.settings.w, self.cache.settings.h)
-  self.control:SetHidden(self.cache.settings.hidden)
+  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, LEDGER_CACHE.offsetX, LEDGER_CACHE.offsetY)
+  self.control:SetDimensions(LEDGER_CACHE.width, LEDGER_CACHE.height)
 end
 
 function Ledger:Save()
-  self.cache.settings.x = self.control:GetLeft()
-  self.cache.settings.y = self.control:GetTop()
-  self.cache.settings.w = self.control:GetWidth()
-  self.cache.settings.h = self.control:GetHeight()
-  self.cache.settings.hidden = self.control:IsHidden()
+  LEDGER_CACHE.offsetX = self.control:GetLeft()
+  LEDGER_CACHE.offsetY = self.control:GetTop()
+  LEDGER_CACHE.width = self.control:GetWidth()
+  LEDGER_CACHE.height = self.control:GetHeight()
 end
 
 --
@@ -316,7 +326,5 @@ end
 
 function Ledger_OnResizeStop()
   LEDGER:Save()
-
-  ZO_ScrollList_SetHeight(LEDGER.list, LEDGER.list:GetHeight())
-  ZO_ScrollList_Commit(LEDGER.list)
+  LEDGER:Refresh()
 end

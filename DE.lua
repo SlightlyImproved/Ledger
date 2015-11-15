@@ -57,7 +57,7 @@ local REASONS = {
   [CURRENCY_CHANGE_REASON_TRADINGHOUSE_PURCHASE]    = "Gildenladen Kauf",
   [CURRENCY_CHANGE_REASON_TRADINGHOUSE_REFUND]      = "Gildenladen Verkauf",
   [CURRENCY_CHANGE_REASON_TRAIT_REVEAL]             = tostring(CURRENCY_CHANGE_REASON_TRAIT_REVEAL),
-  [CURRENCY_CHANGE_REASON_TRAVEL_GRAVEYARD]         = tostring(CURRENCY_CHANGE_REASON_TRAVEL_GRAVEYARD),
+  [CURRENCY_CHANGE_REASON_TRAVEL_GRAVEYARD]         = "Wayshrine",
   [CURRENCY_CHANGE_REASON_VENDOR]                   = "Verkäufer",
   [CURRENCY_CHANGE_REASON_VENDOR_LAUNDER]           = "Geldwäsche",
   [CURRENCY_CHANGE_REASON_VENDOR_REPAIR]            = "Reperaturen",
@@ -70,15 +70,14 @@ end
 ZO_CreateStringId("SI_BINDING_NAME_LEDGER_TOGGLE"   , "Open/close Ledger")
 
 ZO_CreateStringId("SI_LEDGER_TITLE"                 , "Hauptbuch")
-ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "No records found.")
+ZO_CreateStringId("SI_LEDGER_EMPTY_DATA"            , "Welcome! Go get or spend some Gold and see your transactions appearing here.")
+ZO_CreateStringId("SI_LEDGER_EMPTY_FILTER"          , "This filter has returned nothing.")
 ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP"      , "Zeitpunkt")
 ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Zeichen")
 ZO_CreateStringId("SI_LEDGER_HEADER_REASON"         , "Grund")
 ZO_CreateStringId("SI_LEDGER_HEADER_VARIATION"      , "Veränderung")
 ZO_CreateStringId("SI_LEDGER_HEADER_BALANCE"        , "Abschluss")
-
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION1"    , "Last 1 day")
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION2"    , "Last 1 week")
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_OPTION3"    , "Last 1 month")
-
-ZO_CreateStringId("SI_LEDGER_CHARACTER_OPTION1"    , "All characters")
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_DAY"      , "Last 1 day")
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_WEEK"     , "Last 1 week")
+ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_MONTH"    , "Last 1 month")
+ZO_CreateStringId("SI_LEDGER_ALL_CHARACTERS"        , "All characters")

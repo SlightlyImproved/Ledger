@@ -1,5 +1,5 @@
 :: Package your ESO add-on ready for distribution.
-:: Version 1.2 Fri Sep 04 12:31:31 BRT 2015
+:: Version 1.3 Sat, 14 Nov 2015 22:36:23 +0000
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
@@ -10,7 +10,7 @@ for %%* in (.) do set name=%%~nx*
 
 if not exist %name%.txt (
   echo * Please enter the name of your add-on:
-  set /P name=^> 
+  set /P name=^>
 )
 
 for /F "tokens=3" %%i in ('findstr /C:"## Version:" %name%.txt') do set version=%%i
@@ -28,8 +28,8 @@ for /F %%i in ('findstr /B /R "[^#;]" %name%.txt') do (
   set files=!files! !file:$^(language^)=*!
 )
 
-if exist package.txt (
-  for /F "tokens=*" %%i in (package.txt) do (
+if exist package.manifest (
+  for /F "tokens=*" %%i in (package.manifest) do (
     set files=!files! %%~nxi
   )
 )
