@@ -1,4 +1,4 @@
--- Ledger 1.3.0 Nov 15 2015 21:13:45 GMT
+-- Ledger 1.3.1 Nov 16 2015 20:05:13 GMT
 -- More on https://github.com/haggen/Ledger
 
 local Ledger = ZO_SortFilterList:Subclass()
@@ -28,6 +28,8 @@ local DEFAULT_CACHE = {
   characters = {},
   data = {},
 }
+
+LEDGER_CACHE = DEFAULT_CACHE
 
 local SORT_KEYS = {
   timestamp = {
@@ -194,7 +196,7 @@ function Ledger:OnMoneyUpdate(e, balance, previously, reason)
 end
 
 function Ledger:Refresh()
-  if not LEDGER_CACHE.isHidden then
+  if LEDGER_CACHE.isHidden == false then
     self:RefreshData()
   end
 end

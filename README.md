@@ -10,6 +10,10 @@ You can [get it free at ESOUI](http://www.esoui.com/downloads/info1172-Ledger.ht
 
 ## Change log
 
+### 1.3.1 _on Nov 16 2015 20:05:13 GMT_
+
+- Fixed bug where a refresh could be called before the data was loaded, prompting the user with an error. (Thanks BigM for the report.)
+
 ### 1.3.0 _on Nov 15 2015 21:13:45 GMT_
 
 - New entries with the same reason within 5 minutes are now grouped. The number of grouped entries are shown inside parenthesis - e.g. Loot (4)
