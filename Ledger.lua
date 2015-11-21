@@ -1,349 +1,438 @@
--- Ledger 1.3.1 Nov 16 2015 20:05:13 GMT
--- More on https://github.com/haggen/Ledger
+-- Ledger 1.4.0 (Dec 20 2015)
+-- Licensed under CC BY-NC-SA 4.0
+-- More at https://github.com/haggen/Ledger
+
+LEDGER = "Ledger"
+
+--
+--
+--
+--
+
+local function Ledger_FormatCurrencyVariation(value)
+    local incomeColor = ZO_ColorDef:New("11EE99")
+    local expenseColor = ZO_ColorDef:New("EE2222")
+
+    local formattedValue = ZO_CurrencyControl_FormatCurrency(zo_abs(value))
+
+    if value >= 0 then
+        return incomeColor:Colorize("+"..formattedValue)
+    else
+        return expenseColor:Colorize("-"..formattedValue)
+    end
+end
+
+local function Ledger_SetupComboBox(self, name)
+    local comboBox = ZO_ComboBox_ObjectFromContainer(GetControl(self.control, name))
+    comboBox:SetSortsItems(false)
+    return comboBox
+end
+
+--
+--
+--
 
 local Ledger = ZO_SortFilterList:Subclass()
 
---
---
---
+function Ledger:New(...)
+    return ZO_SortFilterList.New(self, ...)
+end
 
-LEDGER_MAINTAINER = "@eolhain"
-LEDGER_WINDOW_WIDTH = 800
-LEDGER_WINDOW_HEIGHT = 460
-LEDGER_ROW_HEIGHT = 32
-LEDGER_ROW_DATA = 1
+function Ledger:Initialize(control, sv)
+    ZO_SortFilterList.Initialize(self, control)
 
-local DEFAULT_CACHE = {
-  version = 2,
-  width = LEDGER_WINDOW_WIDTH,
-  height = LEDGER_WINDOW_HEIGHT,
-  offsetX = (GuiRoot:GetWidth() - LEDGER_WINDOW_WIDTH) / 2,
-  offsetY = (GuiRoot:GetHeight() - LEDGER_WINDOW_HEIGHT) / 2,
-  isHidden = false,
-  language = GetCVar("Language.2"),
-  filters = {
-    timeFrame = 1,
-    character = 1,
-  },
-  characters = {},
-  data = {},
-}
+    ZO_ScrollList_AddDataType(self.list, 1, "LedgerRow", 32, function(...) self:SetupRow(...) end)
 
-LEDGER_CACHE = DEFAULT_CACHE
+    self:SetAlternateRowBackgrounds(true)
+    self:SetEmptyText(GetString(SI_LEDGER_EMPTY))
 
-local SORT_KEYS = {
-  timestamp = {
-    isNumeric = true
-  },
-  character = {
-    caseInsensitive = true,
-    tiebreaker = "timestamp",
-  },
-  reason = {
-    caseInsensitive = true,
-    tiebreaker = "timestamp",
-  },
-  variation = {
-    isNumeric = true,
-    tiebreaker = "timestamp",
-  },
-  balance = {
-    isNumeric = true,
-    tiebreaker = "timestamp",
-  },
-}
+    Fix_ZO_SortHeaderGroup_OnHeaderClicked(self.sortHeaderGroup)
+    self.sortHeaderGroup:SelectHeaderByKey("timestamp")
 
-local TIME_FRAME_FILTER_OPTIONS = {
-  [1] = {
-    label = GetString(SI_LEDGER_TIME_FRAME_1_DAY),
-    value = 3600 * 24 * 1
-  },
-  [2] = {
-    label = GetString(SI_LEDGER_TIME_FRAME_1_WEEK),
-    value = 3600 * 24 * 7
-  },
-  [3] = {
-    label = GetString(SI_LEDGER_TIME_FRAME_1_MONTH),
-    value = 3600 * 24 * 30
-  },
-}
+    self.sv = sv
 
-local CHARACTER_FILTER_OPTIONS = {
-  [1] = {
-    label = GetString(SI_LEDGER_ALL_CHARACTERS),
-    value = false
-  }
-}
+    self.control:SetHandler("OnMoveStop", function()
+        self.sv.offsetX = self.control:GetLeft()
+        self.sv.offsetY = self.control:GetTop()
+    end)
 
-local MERGE_ENTRY_THRESHOLD = 300
+    self.control:SetHandler("OnResizeStop", function()
+        self.sv.x = self.control:GetWidth()
+        self.sv.y = self.control:GetHeight()
+        self:RefreshScrollListHeight()
+    end)
 
---
---
---
+    if not (self.sv.offsetX == 0 and self.sv.offsetY == 0) then
+        self.control:ClearAnchors()
+        self.control:SetAnchor(TOPLEFT, nil, TOPLEFT, self.sv.offsetX, self.sv.offsetY)
+    end
+    self.control:SetDimensions(self.sv.x, self.sv.y)
 
-function Ledger:New(control)
-  local manager = ZO_SortFilterList.New(self, control)
+    self.sceneFragment = ZO_HUDFadeSceneFragment:New(self.control)
+    HUD_SCENE:AddFragment(self.sceneFragment)
+    HUD_UI_SCENE:AddFragment(self.sceneFragment)
+    self.sceneFragment:SetHiddenForReason("hidden", self.sv.isHidden)
 
-  ZO_ScrollList_AddDataType(manager.list, LEDGER_ROW_DATA, "LedgerRow", LEDGER_ROW_HEIGHT, function(...) manager:SetupRow(...) end)
+    local function OnFragmentStateChange()
+        self.sv.isHidden = self.sceneFragment:IsHidden()
+        self:Refresh()
+    end
+    self.sceneFragment:RegisterCallback("StateChange", OnFragmentStateChange)
 
-  manager:SetAlternateRowBackgrounds(true)
+    local currentCharacter = GetUnitName("player")
 
-  manager.sortHeaderGroup:SelectHeaderByKey("timestamp")
-  manager.sortHeaderGroup:SelectHeaderByKey("timestamp")
-
-  manager.timeFrameComboBox = manager:SetupComboBox("FiltersTimeFrame")
-  manager.characterComboBox = manager:SetupComboBox("FiltersCharacter")
-
-  LEDGER_FRAGMENT = ZO_HUDFadeSceneFragment:New(control, DEFAULT_HUD_DURATION, 50)
-
-  HUD_SCENE:AddFragment(LEDGER_FRAGMENT)
-  HUD_UI_SCENE:AddFragment(LEDGER_FRAGMENT)
-
-  SLASH_COMMANDS["/ledger"] = function() manager:Toggle() end
-
-  local function OnAddOnLoaded(e, name)
-    if name ~= "Ledger" then return end
-
-    LEDGER_CACHE = ZO_SavedVars:NewAccountWide("LedgerCache", DEFAULT_CACHE.version, nil, DEFAULT_CACHE)
-
-    LEDGER_FRAGMENT:SetHiddenForReason("isHidden", LEDGER_CACHE.isHidden)
-
-    if #LEDGER_CACHE.data == 0 then
-      manager:SetEmptyText(GetString(SI_LEDGER_EMPTY_DATA))
-    else
-      manager:SetEmptyText(GetString(SI_LEDGER_EMPTY_FILTER))
+    if not table.indexOf(self.sv.charactersList, currentCharacter) then
+        table.insert(self.sv.charactersList, currentCharacter)
     end
 
-    if LEDGER_CACHE.settings ~= nil then
-      LEDGER_CACHE.settings = nil
-      LEDGER_CACHE.width = DEFAULT_CACHE.width
-      LEDGER_CACHE.height = DEFAULT_CACHE.height
-      LEDGER_CACHE.offsetX = DEFAULT_CACHE.offsetX
-      LEDGER_CACHE.offsetY = DEFAULT_CACHE.offsetY
-      LEDGER_CACHE.isHidden = DEFAULT_CACHE.isHidden
+    self.closeButton = GetControl(self.control, "CloseButton")
+    self.closeButton:SetHandler("OnClicked", function()
+        self:Toggle()
+    end)
+
+    self.summaryLabel = GetControl(self.control, "Summary")
+
+    self:SetupPeriodComboBox()
+    self:SetupCharacterComboBox()
+
+    self.mergeCheckBox = GetControl(self.control, "OptionsMergeCheckBox")
+    ZO_CheckButton_SetLabelText(self.mergeCheckBox, GetString(SI_LEDGER_MERGE_LABEL))
+    ZO_CheckButton_SetCheckState(self.mergeCheckBox, self.sv.options.shouldMerge)
+    ZO_CheckButton_SetToggleFunction(self.mergeCheckBox, function(control, state)
+        self.sv.options.shouldMerge = state
+        self:Refresh()
+    end)
+
+    local function OnPlayerCombatState(event, inCombat)
+        self.sceneFragment:SetHiddenForReason("combat", inCombat)
+    end
+    self.control:RegisterForEvent(EVENT_PLAYER_COMBAT_STATE, OnPlayerCombatState)
+
+    local function OnMoneyUpdate(event, newBalance, previousBalance, reason)
+        local entry =
+        {
+            timestamp = GetTimeStamp(),
+            character = GetUnitName("player"),
+            reason = reason,
+            variation = newBalance - previousBalance,
+            balance = newBalance,
+        }
+
+        table.insert(self.sv.masterList, entry)
+
+        self:Refresh()
+    end
+    self.control:RegisterForEvent(EVENT_MONEY_UPDATE, OnMoneyUpdate)
+
+    SLASH_COMMANDS["/ledger"] = function()
+        self:Toggle()
     end
 
-    manager:RegisterCharacter(GetUnitName("player"))
-    manager:UpdateFilterOptions()
-
-    manager:Restore()
-    manager:Refresh()
-
-    control:RegisterForEvent(EVENT_MONEY_UPDATE, function(...) manager:OnMoneyUpdate(...) end)
-    control:RegisterForEvent(EVENT_PLAYER_COMBAT_STATE, function(e, inCombat) if inCombat then manager:Hide() end end)
-    control:UnregisterForEvent(EVENT_ADD_ON_LOADED)
-  end
-
-  control:RegisterForEvent(EVENT_ADD_ON_LOADED, OnAddOnLoaded)
-
-  return manager
+    self:Refresh()
 end
 
-function Ledger:SetupComboBox(name)
-  local comboBox = ZO_ComboBox_ObjectFromContainer(GetControl(self.control, name))
-  comboBox:SetSortsItems(false)
-  comboBox:SetFont("LedgerRowFont")
-  comboBox:SetSpacing(2)
-  return comboBox
-end
+function Ledger:SetupPeriodComboBox()
+    self.periodComboBox = Ledger_SetupComboBox(self, "OptionsPeriodComboBox")
 
-function Ledger:RegisterCharacter(name)
-  for i = 1, #LEDGER_CACHE.characters do
-    if LEDGER_CACHE.characters[i] == name then
-      name = nil
+    local selectedIndex = 1
+
+    local options =
+    {
+        [1] = {
+            label = GetString(SI_LEDGER_PERIOD_1_HOUR),
+            value = 3600,
+        },
+        [2] = {
+            label = GetString(SI_LEDGER_PERIOD_1_DAY),
+            value = 3600 * 24,
+        },
+        [3] = {
+            label = GetString(SI_LEDGER_PERIOD_1_WEEK),
+            value = 3600 * 24 * 7,
+        },
+        [4] = {
+            label = GetString(SI_LEDGER_PERIOD_1_MONTH),
+            value = 3600 * 24 * 30,
+        },
+    }
+
+    for i = 1, #options do
+        local item = self.periodComboBox:CreateItemEntry(options[i].label, function()
+            self.sv.options.selectedPeriod = options[i].value
+            self:Refresh()
+        end)
+
+        self.periodComboBox:AddItem(item)
+
+        if self.sv.options.selectedPeriod == options[i].value then
+            selectedIndex = i
+        end
     end
-  end
 
-  if name then table.insert(LEDGER_CACHE.characters, name) end
+    self.periodComboBox:SelectItemByIndex(selectedIndex)
 end
 
-function Ledger:UpdateFilterOptions()
-  for i = 1, #LEDGER_CACHE.characters do
-    table.insert(CHARACTER_FILTER_OPTIONS, {
-      label = LEDGER_CACHE.characters[i],
-      value = LEDGER_CACHE.characters[i],
-    })
-  end
+function Ledger:SetupCharacterComboBox()
+    self.characterComboBox = Ledger_SetupComboBox(self, "OptionsCharacterComboBox")
 
-  for index, option in ipairs(TIME_FRAME_FILTER_OPTIONS) do
-    d(index, option)
-    local callback = function() self:UpdateFilter("timeFrame", index) end
-    self.timeFrameComboBox:AddItem(self.timeFrameComboBox:CreateItemEntry(option.label, callback))
-  end
+    local selectedIndex = 1
 
-  self.timeFrameComboBox:SelectItemByIndex(LEDGER_CACHE.filters.timeFrame or 1)
+    local options =
+    {
+        [1] =
+        {
+            label = GetString(SI_LEDGER_ALL_CHARACTERS),
+            value = nil,
+        }
+    }
 
-  for index, option in ipairs(CHARACTER_FILTER_OPTIONS) do
-    local callback = function() self:UpdateFilter("character", index) end
-    self.characterComboBox:AddItem(self.characterComboBox:CreateItemEntry(option.label, callback))
-  end
+    for i = 1, #self.sv.charactersList do
+        local option =
+        {
+            label = self.sv.charactersList[i],
+            value = self.sv.charactersList[i],
+        }
 
-  self.characterComboBox:SelectItemByIndex(LEDGER_CACHE.filters.character or 1)
-end
+        table.insert(options, option)
+    end
 
-function Ledger:OnMoneyUpdate(e, balance, previously, reason)
-  local newEntry = {}
+    for i = 1, #options do
+        local item = self.characterComboBox:CreateItemEntry(options[i].label, function()
+            self.sv.options.selectedCharacter = options[i].value
+            self:Refresh()
+        end)
 
-  newEntry.timestamp = GetTimeStamp()
-  newEntry.character = GetUnitName("player")
-  newEntry.reason = reason
-  newEntry.variation = balance - previously
-  newEntry.balance = balance
+        self.characterComboBox:AddItem(item)
 
-  table.insert(LEDGER_CACHE.data, newEntry)
+        if self.sv.options.selectedCharacter == options[i].value then
+            selectedIndex = i
+        end
+    end
 
-  self:Refresh()
+    self.characterComboBox:SelectItemByIndex(selectedIndex)
 end
 
 function Ledger:Refresh()
-  if LEDGER_CACHE.isHidden == false then
-    self:RefreshData()
-  end
+    if not self.sceneFragment:IsHidden() then
+        self:RefreshData()
+        self:RefreshSummary()
+    end
 end
 
-function Ledger:UpdateFilter(filter, index)
-  LEDGER_CACHE.filters[filter] = index
-  self:Refresh()
+function Ledger:RefreshSummary()
+    local scrollData = ZO_ScrollList_GetDataList(self.list)
+
+    if #scrollData > 0 then
+        local variationByPeriod = 0
+        local variationsByReason = {}
+
+        for i = 1, #scrollData do
+            local data = scrollData[i].data
+
+            variationByPeriod = variationByPeriod + data.variation
+
+            if variationsByReason[data.reason] then
+                variationsByReason[data.reason] = variationsByReason[data.reason] + data.variation
+            else
+                variationsByReason[data.reason] = data.variation
+            end
+        end
+
+        local mostExpensive = {variation = 0}
+        local mostProfitable = {variation = 0}
+
+        for reason, variation in pairs(variationsByReason) do
+            if variation >= mostProfitable.variation then
+                mostProfitable.variation = variation
+                mostProfitable.reason = reason
+            end
+
+            if variation <= mostExpensive.variation then
+                mostExpensive.variation = variation
+                mostExpensive.reason = reason
+            end
+        end
+
+        local t =
+        {
+            Ledger_FormatCurrencyVariation(variationByPeriod),
+            self.periodComboBox:GetSelectedItem(),
+            GetString("SI_LEDGER_REASON", mostExpensive.reason),
+            Ledger_FormatCurrencyVariation(mostExpensive.variation),
+            GetString("SI_LEDGER_REASON", mostProfitable.reason),
+            Ledger_FormatCurrencyVariation(mostProfitable.variation),
+        }
+
+        self.summaryLabel:SetText(zo_strformat(GetString(SI_LEDGER_SUMMARY), unpack(t)))
+    else
+        self.summaryLabel:SetText(GetString(SI_LEDGER_SUMMARY_EMPTY))
+    end
 end
 
 function Ledger:BuildMasterList()
-  self.masterList = {}
+    self.masterList = {}
 
-  local currentEntry = nil
+    local t = {}
+    local threshold = GetTimeStamp() - self.sv.options.selectedPeriod
 
-  for i = 1, #LEDGER_CACHE.data do
-    local previousEntry = currentEntry
+    for i = #self.sv.masterList, 1, -1 do
+        local entry = self.sv.masterList[i]
 
-    currentEntry = ZO_ShallowTableCopy(LEDGER_CACHE.data[i], {})
-    currentEntry.reason = GetString("SI_LEDGER_REASON", currentEntry.reason)
-
-    local withinThreshold = false
-    local sameReason = false
-
-    if previousEntry then
-      withinThreshold = currentEntry.timestamp <= (previousEntry.timestamp + MERGE_ENTRY_THRESHOLD)
-      sameReason = currentEntry.reason == previousEntry.reason
+        if entry.timestamp >= threshold then
+            table.insert(t, ZO_ShallowTableCopy(entry))
+        else
+            break
+        end
     end
 
-    if withinThreshold and sameReason then
-      previousEntry.variation = previousEntry.variation + currentEntry.variation
-      previousEntry.balance = currentEntry.balance
-      previousEntry.repeated = (previousEntry.repeated or 1) + 1
-    else
-      table.insert(self.masterList, currentEntry)
+    for i = #t, 1, -1 do
+        table.insert(self.masterList, t[i])
     end
-  end
 end
 
 function Ledger:FilterScrollList()
-  local scrollData = ZO_ScrollList_GetDataList(self.list)
-  ZO_ClearNumericallyIndexedTable(scrollData)
+    local scrollData = ZO_ScrollList_GetDataList(self.list)
+    ZO_ClearNumericallyIndexedTable(scrollData)
 
-  local timeFrame = GetTimeStamp() - TIME_FRAME_FILTER_OPTIONS[LEDGER_CACHE.filters.timeFrame].value
-  local character = CHARACTER_FILTER_OPTIONS[LEDGER_CACHE.filters.character].value
+    local previousEntry
 
-  for i = 1, #self.masterList do
-    local entry = self.masterList[i]
-    local match = true
+    for i = 1, #self.masterList do
+        currentEntry = self.masterList[i]
 
-    match = match and (character == false or character == entry.character)
-    match = match and entry.timestamp >= timeFrame
+        local matchSelectedCharacter = (currentEntry.character == self.sv.options.selectedCharacter)
 
-    if match then
-      table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LEDGER_ROW_DATA, entry))
+        if (not self.sv.options.selectedCharacter or matchSelectedCharacter) then
+            if (not self.sv.options.shouldMerge) or (self.sv.options.shouldMerge and not previousEntry) then
+                table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, currentEntry))
+                previousEntry = currentEntry
+            else
+                local isSameCharacter = currentEntry.characterName == previousEntry.characterName
+                local isSameReason = currentEntry.reason == previousEntry.reason
+
+                if (isSameReason and isSameCharacter) then
+                    previousEntry.mergeCount = (previousEntry.mergeCount or 1) + 1
+                    previousEntry.variation = previousEntry.variation + currentEntry.variation
+                    previousEntry.balance = currentEntry.balance
+                else
+                    table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, currentEntry))
+                    previousEntry = currentEntry
+                end
+            end
+        end
     end
-  end
 end
 
 function Ledger:SortScrollList()
-  local scrollData = ZO_ScrollList_GetDataList(self.list)
-  table.sort(scrollData, function(a, b) return self:CompareRows(a, b) end)
+    local scrollData = ZO_ScrollList_GetDataList(self.list)
+    table.sort(scrollData, function(...) return self:CompareRows(...) end)
 end
 
-function Ledger:CompareRows(a, b)
-  return ZO_TableOrderingFunction(a.data, b.data, self.currentSortKey, SORT_KEYS, self.currentSortOrder)
+local sortKeys =
+{
+    timestamp =
+    {
+        isNumeric = true
+    },
+    name =
+    {
+        caseInsensitive = true,
+        tiebreaker = "timestamp"
+    },
+    reason =
+    {
+        caseInsensitive = true,
+        tiebreaker = "timestamp"
+    },
+    variation =
+    {
+        isNumeric = true,
+        tiebreaker = "timestamp"
+    },
+    balance =
+    {
+        isNumeric = true,
+        tiebreaker = "timestamp"
+    },
+}
+
+function Ledger:CompareRows(row1, row2)
+    return ZO_TableOrderingFunction(row1.data, row2.data, self.currentSortKey, sortKeys, self.currentSortOrder)
 end
 
-function Ledger:GetRowColors(data, mouseIsOver, control)
-  return ZO_ColorDef:New(1, 1, 1, 1)
+function Ledger:GetRowColors()
 end
 
 function Ledger:SetupRow(control, data)
-  ZO_SortFilterList.SetupRow(self, control, data)
+    ZO_SortFilterList.SetupRow(self, control, data)
 
-  local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp, LEDGER_CACHE.language)
-  local sign, hue = ""
+    local formattedDateTime = L10n_GetLocalizedDateTime(data.timestamp)
 
-  if data.variation >= 0 then
-    sign, hue = "+", ZO_ColorDef:New(0.25, 0.95, 0.85, 1)
-  else
-    hue = ZO_ColorDef:New(0.95, 0.25, 0.35, 1)
-  end
+    local reasonDescription = GetString("SI_LEDGER_REASON", data.reason)
+    if data.mergeCount and (data.mergeCount > 0) then
+        reasonDescription = reasonDescription..string.format(" (%d)", data.mergeCount)
+    end
 
-  GetControl(control, "Timestamp"):SetText(formattedDateTime)
-  GetControl(control, "Character"):SetText(data.character)
-  GetControl(control, "Reason"):SetText(data.reason .. (data.repeated and zo_strformat(" (<<1>>)", data.repeated) or ""))
-  GetControl(control, "Variation"):SetText(sign .. ZO_CurrencyControl_FormatCurrency(data.variation))
-  GetControl(control, "Variation"):SetColor(hue:UnpackRGBA())
-  GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
+    GetControl(control, "Timestamp"):SetText(formattedDateTime)
+    GetControl(control, "Character"):SetText(data.character)
+    GetControl(control, "Reason"):SetText(reasonDescription)
+    GetControl(control, "Variation"):SetText(Ledger_FormatCurrencyVariation(data.variation))
+    GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))
+end
+
+function Ledger:RefreshScrollListHeight()
+    ZO_ScrollList_SetHeight(self.list, self.list:GetHeight())
+    ZO_ScrollList_Commit(self.list)
 end
 
 function Ledger:Toggle()
-  if LEDGER_CACHE.isHidden then
-    self:Show()
-  else
-    self:Hide()
-  end
-end
-
-function Ledger:Show()
-  LEDGER_CACHE.isHidden = false
-  LEDGER_FRAGMENT:SetHiddenForReason("isHidden", false)
-
-  if not IsGameCameraUIModeActive() then
-    SetGameCameraUIMode(true)
-  end
-end
-
-function Ledger:Hide()
-  LEDGER_CACHE.isHidden = true
-  LEDGER_FRAGMENT:SetHiddenForReason("isHidden", true)
-end
-
-function Ledger:Restore()
-  self.control:ClearAnchors()
-  self.control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, LEDGER_CACHE.offsetX, LEDGER_CACHE.offsetY)
-  self.control:SetDimensions(LEDGER_CACHE.width, LEDGER_CACHE.height)
-end
-
-function Ledger:Save()
-  LEDGER_CACHE.offsetX = self.control:GetLeft()
-  LEDGER_CACHE.offsetY = self.control:GetTop()
-  LEDGER_CACHE.width = self.control:GetWidth()
-  LEDGER_CACHE.height = self.control:GetHeight()
+    if self.sceneFragment:IsHidden() then
+        SCENE_MANAGER:SetInUIMode(true)
+        self.sceneFragment:SetHiddenForReason("hidden", false)
+        self.control:BringWindowToTop()
+    else
+        self.sceneFragment:SetHiddenForReason("hidden", true)
+    end
 end
 
 --
 --
 --
+
+local defaultSavedVars =
+{
+    ["masterList"] = {},
+    ["charactersList"] = {},
+    ["isHidden"] = false,
+    ["x"] = 840,
+    ["y"] = 320,
+    ["offsetX"] = 0,
+    ["offsetY"] = 0,
+    ["options"] =
+    {
+        ["shouldMerge"] = true,
+        ["selectedPeriod"] = 3600,
+        ["selectedCharacter"] = nil
+    }
+}
 
 function Ledger_OnInitialized(control)
-  LEDGER = Ledger:New(control)
-end
+    EVENT_MANAGER:RegisterForEvent(LEDGER, EVENT_ADD_ON_LOADED, function(event, addonName)
+        if (addonName == LEDGER) then
+            EVENT_MANAGER:UnregisterForEvent(LEDGER, EVENT_ADD_ON_LOADED)
 
-function LedgerClose_OnMouseUp(control)
-  LEDGER:Toggle()
-end
+            local sv = ZO_SavedVars:NewAccountWide("LedgerSavedVars", 1, nil, defaultSavedVars)
 
-function Ledger_OnShow()
-  LEDGER:Refresh()
-end
+            if LedgerCache then
+                local oldSavedVars = LedgerCache["Default"][GetUnitDisplayName("player")]
 
-function Ledger_OnMoveStop()
-  LEDGER:Save()
-end
+                if oldSavedVars then
+                    sv.masterList = oldSavedVars["$AccountWide"].data
+                    sv.charactersList = oldSavedVars["$AccountWide"].characters
+                    LedgerCache["Default"][GetUnitDisplayName("player")] = nil
+                end
+            end
 
-function Ledger_OnResizeStop()
-  LEDGER:Save()
-  LEDGER:Refresh()
+            LEDGER = Ledger:New(control, sv)
+        end
+    end)
 end

@@ -1,4 +1,4 @@
-local REASONS = {
+local currencyChangeReasons = {
   [CURRENCY_CHANGE_REASON_ABILITY_UPGRADE_PURCHASE] = "Fertigkeit erweiterung",
   [CURRENCY_CHANGE_REASON_ACHIEVEMENT]              = "Errungenschaft",
   [CURRENCY_CHANGE_REASON_ACTION]                   = "CURRENCY_CHANGE_REASON_ACTION",
@@ -63,21 +63,24 @@ local REASONS = {
   [CURRENCY_CHANGE_REASON_VENDOR_REPAIR]            = "Reperaturen",
 }
 
-for n, value in pairs(REASONS) do
-  ZO_CreateStringId("SI_LEDGER_REASON" .. n, value)
+for i, value in pairs(currencyChangeReasons) do
+  ZO_CreateStringId("SI_LEDGER_REASON" .. i, value)
 end
 
 ZO_CreateStringId("SI_BINDING_NAME_LEDGER_TOGGLE"   , "Open/close Ledger")
 
 ZO_CreateStringId("SI_LEDGER_TITLE"                 , "Hauptbuch")
-ZO_CreateStringId("SI_LEDGER_EMPTY_DATA"            , "Welcome! Go get or spend some Gold and see your transactions appearing here.")
-ZO_CreateStringId("SI_LEDGER_EMPTY_FILTER"          , "This filter has returned nothing.")
+ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "Whenever you get or spend Gold, you'll see a new entry automatically appear here.")
 ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP"      , "Zeitpunkt")
 ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Zeichen")
 ZO_CreateStringId("SI_LEDGER_HEADER_REASON"         , "Grund")
 ZO_CreateStringId("SI_LEDGER_HEADER_VARIATION"      , "Veränderung")
 ZO_CreateStringId("SI_LEDGER_HEADER_BALANCE"        , "Abschluss")
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_DAY"      , "Last 1 day")
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_WEEK"     , "Last 1 week")
-ZO_CreateStringId("SI_LEDGER_TIME_FRAME_1_MONTH"    , "Last 1 month")
+ZO_CreateStringId("SI_LEDGER_PERIOD_1_HOUR"         , "Last 1 hour")
+ZO_CreateStringId("SI_LEDGER_PERIOD_1_DAY"          , "Last 1 day")
+ZO_CreateStringId("SI_LEDGER_PERIOD_1_WEEK"         , "Last 1 week")
+ZO_CreateStringId("SI_LEDGER_PERIOD_1_MONTH"        , "Last 1 month")
 ZO_CreateStringId("SI_LEDGER_ALL_CHARACTERS"        , "All characters")
+ZO_CreateStringId("SI_LEDGER_MERGE_LABEL"           , "Merge similar")
+ZO_CreateStringId("SI_LEDGER_SUMMARY"               , "Balance changed by <<1>> in the |cC4C19B<<z:2>>|r. You spent most on |cC4C19B<<3>>|r (<<4>>) and profited most from |cC4C19B<<5>>|r (<<6>>).")
+ZO_CreateStringId("SI_LEDGER_SUMMARY_EMPTY"         , "Here you'll see a summary of your income and expenses.")
