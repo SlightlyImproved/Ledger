@@ -2,6 +2,8 @@
 
 > **Ledger** is an [ESO](http://www.elderscrollsonline.com) add-on to keep tabs on your Gold income and expenses.
 
+![Ledger](https://raw.githubusercontent.com/haggen/Ledger/master/ledger.jpg)
+
 ## Usage:
 
 Type '/ledger' (or set a key binding in the control settings) to open and close the main window. There you can see a history of all your gold transactions.
