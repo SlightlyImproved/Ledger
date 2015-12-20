@@ -1,4 +1,4 @@
--- Ledger 1.4.0 (Dec 20 2015)
+-- Ledger 1.4.1 (Dec 24 2015)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -238,6 +238,9 @@ function Ledger:RefreshSummary()
             end
         end
 
+        variationsByReason[CURRENCY_CHANGE_REASON_BANK_DEPOSIT] = nil
+        variationsByReason[CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL] = nil
+
         local mostExpensive = {variation = 0}
         local mostProfitable = {variation = 0}
 
@@ -257,13 +260,23 @@ function Ledger:RefreshSummary()
         {
             Ledger_FormatCurrencyVariation(variationByPeriod),
             self.periodComboBox:GetSelectedItem(),
-            GetString("SI_LEDGER_REASON", mostExpensive.reason),
-            Ledger_FormatCurrencyVariation(mostExpensive.variation),
-            GetString("SI_LEDGER_REASON", mostProfitable.reason),
-            Ledger_FormatCurrencyVariation(mostProfitable.variation),
         }
 
-        self.summaryLabel:SetText(zo_strformat(GetString(SI_LEDGER_SUMMARY), unpack(t)))
+        local summary = zo_strformat(GetString("SI_LEDGER_SUMMARY", 1), unpack(t))
+
+        if mostExpensive.reason and mostProfitable.reason then
+            t =
+            {
+                GetString("SI_LEDGER_REASON", mostExpensive.reason),
+                Ledger_FormatCurrencyVariation(mostExpensive.variation),
+                GetString("SI_LEDGER_REASON", mostProfitable.reason),
+                Ledger_FormatCurrencyVariation(mostProfitable.variation),
+            }
+
+            summary = summary.." "..zo_strformat(GetString("SI_LEDGER_SUMMARY", 2), unpack(t))
+        end
+
+        self.summaryLabel:SetText(summary)
     else
         self.summaryLabel:SetText(GetString(SI_LEDGER_SUMMARY_EMPTY))
     end
@@ -423,12 +436,13 @@ function Ledger_OnInitialized(control)
             local sv = ZO_SavedVars:NewAccountWide("LedgerSavedVars", 1, nil, defaultSavedVars)
 
             if LedgerCache then
-                local oldSavedVars = LedgerCache["Default"][GetUnitDisplayName("player")]
+                local displayName = GetUnitDisplayName("player")
+                local oldSavedVars = LedgerCache["Default"][displayName]
 
                 if oldSavedVars then
                     sv.masterList = oldSavedVars["$AccountWide"].data
                     sv.charactersList = oldSavedVars["$AccountWide"].characters
-                    LedgerCache["Default"][GetUnitDisplayName("player")] = nil
+                    LedgerCache["Default"][displayName] = nil
                 end
             end
 

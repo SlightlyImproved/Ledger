@@ -1,5 +1,5 @@
--- L10n 1.1 Fri Aug 28 20:30:10 BRT 2015
---
+-- L10n 1.1 (Aug 28 2015)
+-- Licensed under CC BY-NC-SA 4.0
 
 function L10n_GetTimeZone()
   return GetSecondsSinceMidnight() - (GetTimeStamp() % 86400)
