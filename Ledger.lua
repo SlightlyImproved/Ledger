@@ -423,12 +423,13 @@ function Ledger_OnInitialized(control)
             local sv = ZO_SavedVars:NewAccountWide("LedgerSavedVars", 1, nil, defaultSavedVars)
 
             if LedgerCache then
-                local oldSavedVars = LedgerCache["Default"][GetUnitDisplayName("player")]
+                local displayName = GetUnitDisplayName("player")
+                local oldSavedVars = LedgerCache["Default"][displayName]
 
                 if oldSavedVars then
                     sv.masterList = oldSavedVars["$AccountWide"].data
                     sv.charactersList = oldSavedVars["$AccountWide"].characters
-                    LedgerCache["Default"][GetUnitDisplayName("player")] = nil
+                    LedgerCache["Default"][displayName] = nil
                 end
             end
 
