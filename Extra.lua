@@ -1,3 +1,6 @@
+-- Ledger 1.4.1 (Dec 24 2015)
+-- Licensed under CC BY-NC-SA 4.0
+-- More at https://github.com/haggen/Ledger
 
 -- Fix bug when sorting ZO_SortHeaderGroup
 -- esoui/libraries/zo_sortheadergroup/zo_sortheadergroup.lua:149

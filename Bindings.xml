@@ -1,11 +1,16 @@
+<!--
+  -- Ledger 1.4.1 (Dec 24 2015)
+  -- Licensed under CC BY-NC-SA 4.0
+  -- More at https://github.com/haggen/Ledger
+  -->
 <Bindings>
-  <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
-    <Category name="Ledger">
-      <Action name="LEDGER_TOGGLE">
-        <Down>
-      		LEDGER:Toggle()
-      	</Down>
-      </Action>
-    </Category>
-  </Layer>
+    <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
+        <Category name="Ledger">
+            <Action name="LEDGER_TOGGLE">
+                <Down>
+                    LEDGER:Toggle()
+                </Down>
+            </Action>
+        </Category>
+    </Layer>
 </Bindings>

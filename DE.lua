@@ -1,3 +1,7 @@
+-- Ledger 1.4.1 (Dec 24 2015)
+-- Licensed under CC BY-NC-SA 4.0
+-- More at https://github.com/haggen/Ledger
+
 local currencyChangeReasons = {
   [CURRENCY_CHANGE_REASON_ABILITY_UPGRADE_PURCHASE] = "Fertigkeit erweiterung",
   [CURRENCY_CHANGE_REASON_ACHIEVEMENT]              = "Errungenschaft",

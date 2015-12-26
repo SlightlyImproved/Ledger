@@ -1,8 +1,8 @@
 <!--
-Ledger 1.4.0 (Dev 19 2015))
-Licensed under CC BY-NC-SA 4.0
-More at https://github.com/haggen/Ledger
--->
+  -- Ledger 1.4.1 (Dec 24 2015)
+  -- Licensed under CC BY-NC-SA 4.0
+  -- More at https://github.com/haggen/Ledger
+  -->
 <GuiXml>
     <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|soft-shadow-thick" />
     <Font name="LedgerFeedbackFont" font="$(BOLD_FONT)|14|shadow" />
