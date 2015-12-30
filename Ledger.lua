@@ -1,10 +1,9 @@
--- Ledger 1.4.1 (Dec 24 2015)
+-- Ledger 1.4.2 (Dec 30 2015)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
 LEDGER = "Ledger"
 
---
 --
 --
 --
@@ -222,6 +221,9 @@ end
 function Ledger:RefreshSummary()
     local scrollData = ZO_ScrollList_GetDataList(self.list)
 
+    local bankDeposit = CURRENCY_CHANGE_REASON_BANK_DEPOSIT
+    local bankWithdrawal = CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL
+
     if #scrollData > 0 then
         local variationByPeriod = 0
         local variationsByReason = {}
@@ -229,7 +231,9 @@ function Ledger:RefreshSummary()
         for i = 1, #scrollData do
             local data = scrollData[i].data
 
-            variationByPeriod = variationByPeriod + data.variation
+            if data.reason ~= bankDeposit and data.reason ~= bankWithdrawal then
+                variationByPeriod = variationByPeriod + data.variation
+            end
 
             if variationsByReason[data.reason] then
                 variationsByReason[data.reason] = variationsByReason[data.reason] + data.variation
@@ -238,8 +242,8 @@ function Ledger:RefreshSummary()
             end
         end
 
-        variationsByReason[CURRENCY_CHANGE_REASON_BANK_DEPOSIT] = nil
-        variationsByReason[CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL] = nil
+        variationsByReason[bankDeposit] = nil
+        variationsByReason[bankWithdrawal] = nil
 
         local mostExpensive = {variation = 0}
         local mostProfitable = {variation = 0}
