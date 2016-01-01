@@ -1,4 +1,4 @@
--- Ledger 1.4.2 (Dec 30 2015)
+-- Ledger 1.5.0 (Jan 1 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -123,6 +123,27 @@ function Ledger:Initialize(control, sv)
     end
     self.control:RegisterForEvent(EVENT_MONEY_UPDATE, OnMoneyUpdate)
 
+    local function OnBankedMoneyUpdate(event, newBalance, previousBalance)
+        local entry =
+        {
+            timestamp = GetTimeStamp(),
+            character = "bank",
+            variation = newBalance - previousBalance,
+            balance = newBalance,
+        }
+
+        if newBalance > previousBalance then
+            entry.reason = CURRENCY_CHANGE_REASON_BANK_DEPOSIT
+        else
+            entry.reason = CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL
+        end
+
+        table.insert(self.sv.masterList, entry)
+
+        self:Refresh()
+    end
+    self.control:RegisterForEvent(EVENT_BANKED_MONEY_UPDATE , OnBankedMoneyUpdate)
+
     SLASH_COMMANDS["/ledger"] = function()
         self:Toggle()
     end
@@ -182,6 +203,11 @@ function Ledger:SetupCharacterComboBox()
         {
             label = GetString(SI_LEDGER_ALL_CHARACTERS),
             value = nil,
+        },
+        [2] =
+        {
+            label = GetString(SI_LEDGER_BANK_CHARACTER),
+            value = "bank",
         }
     }
 
@@ -221,8 +247,7 @@ end
 function Ledger:RefreshSummary()
     local scrollData = ZO_ScrollList_GetDataList(self.list)
 
-    local bankDeposit = CURRENCY_CHANGE_REASON_BANK_DEPOSIT
-    local bankWithdrawal = CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL
+    local isBankSelected = (self.sv.options.selectedCharacter == "bank")
 
     if #scrollData > 0 then
         local variationByPeriod = 0
@@ -231,7 +256,15 @@ function Ledger:RefreshSummary()
         for i = 1, #scrollData do
             local data = scrollData[i].data
 
-            if data.reason ~= bankDeposit and data.reason ~= bankWithdrawal then
+            local isBankDeposit = (data.reason == CURRENCY_CHANGE_REASON_BANK_DEPOSIT)
+            local isBankWithdrawal = (data.reason == CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL)
+
+            local isActuallyIncomeOrExpense = not (isBankDeposit or isBankWithdrawal)
+            if isBankSelected then
+                isActuallyIncomeOrExpense = true
+            end
+
+            if isActuallyIncomeOrExpense then
                 variationByPeriod = variationByPeriod + data.variation
             end
 
@@ -242,8 +275,8 @@ function Ledger:RefreshSummary()
             end
         end
 
-        variationsByReason[bankDeposit] = nil
-        variationsByReason[bankWithdrawal] = nil
+        variationsByReason[CURRENCY_CHANGE_REASON_BANK_DEPOSIT] = nil
+        variationsByReason[CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL] = nil
 
         local mostExpensive = {variation = 0}
         local mostProfitable = {variation = 0}
@@ -323,7 +356,7 @@ function Ledger:FilterScrollList()
                 table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, currentEntry))
                 previousEntry = currentEntry
             else
-                local isSameCharacter = currentEntry.characterName == previousEntry.characterName
+                local isSameCharacter = currentEntry.character == previousEntry.character
                 local isSameReason = currentEntry.reason == previousEntry.reason
 
                 if (isSameReason and isSameCharacter) then
@@ -350,7 +383,7 @@ local sortKeys =
     {
         isNumeric = true
     },
-    name =
+    character =
     {
         caseInsensitive = true,
         tiebreaker = "timestamp"
@@ -389,8 +422,13 @@ function Ledger:SetupRow(control, data)
         reasonDescription = reasonDescription..string.format(" (%d)", data.mergeCount)
     end
 
+    local characterName = data.character
+    if characterName == "bank" then
+        characterName = GetString(SI_LEDGER_BANK_CHARACTER)
+    end
+
     GetControl(control, "Timestamp"):SetText(formattedDateTime)
-    GetControl(control, "Character"):SetText(data.character)
+    GetControl(control, "Character"):SetText(characterName)
     GetControl(control, "Reason"):SetText(reasonDescription)
     GetControl(control, "Variation"):SetText(Ledger_FormatCurrencyVariation(data.variation))
     GetControl(control, "Balance"):SetText(ZO_CurrencyControl_FormatCurrency(data.balance))

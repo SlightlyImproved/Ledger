@@ -1,4 +1,4 @@
--- Ledger 1.4.2 (Dec 30 2015)
+-- Ledger 1.5.0 (Jan 1 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 

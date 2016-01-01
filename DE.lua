@@ -1,4 +1,4 @@
--- Ledger 1.4.2 (Dec 30 2015)
+-- Ledger 1.5.0 (Jan 1 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -69,14 +69,14 @@ local currencyChangeReasons =
 }
 
 for i, value in pairs(currencyChangeReasons) do
-  ZO_CreateStringId("SI_LEDGER_REASON" .. i, value)
+  ZO_CreateStringId("SI_LEDGER_REASON"..i, value)
 end
 
 ZO_CreateStringId("SI_BINDING_NAME_LEDGER_TOGGLE"   , "Hauptbuch öffnen/schließen")
 ZO_CreateStringId("SI_LEDGER_TITLE"                 , "Hauptbuch")
 ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "Wenn du Gold bekommst oder ausgibt wird es hier aufgezeichnet.")
 ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP"      , "Zeitpunkt")
-ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Charakter")
+ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Konto")
 ZO_CreateStringId("SI_LEDGER_HEADER_REASON"         , "Grund")
 ZO_CreateStringId("SI_LEDGER_HEADER_VARIATION"      , "Veränderung")
 ZO_CreateStringId("SI_LEDGER_HEADER_BALANCE"        , "Kontostand")
@@ -84,7 +84,8 @@ ZO_CreateStringId("SI_LEDGER_PERIOD_1_HOUR"         , "1 Stunde")
 ZO_CreateStringId("SI_LEDGER_PERIOD_1_DAY"          , "1 Tag")
 ZO_CreateStringId("SI_LEDGER_PERIOD_1_WEEK"         , "1 Woche")
 ZO_CreateStringId("SI_LEDGER_PERIOD_1_MONTH"        , "1 Monat")
-ZO_CreateStringId("SI_LEDGER_ALL_CHARACTERS"        , "Alle Charaktere")
+ZO_CreateStringId("SI_LEDGER_ALL_CHARACTERS"        , "Alle Konten")
+ZO_CreateStringId("SI_LEDGER_BANK_CHARACTER"        , "Bank")
 ZO_CreateStringId("SI_LEDGER_MERGE_LABEL"           , "Ähnliche zusammenführen")
 ZO_CreateStringId("SI_LEDGER_SUMMARY"               , "Kontostand änderte sich um <<1>> in |cC4C19B<<z:2>>|r. Größte Ausgabe war |cC4C19B<<3>>|r (<<4>>) und größte Einnahme |cC4C19B<<5>>|r (<<6>>).")
 ZO_CreateStringId("SI_LEDGER_SUMMARY_EMPTY"         , "")
