@@ -1,19 +1,26 @@
 <!--
-  -- Ledger 1.5.0 (Jan 1 2016)
+  -- Ledger 1.5.0 (May 1 2016)
   -- Licensed under CC BY-NC-SA 4.0
   -- More at https://github.com/haggen/Ledger
   -->
 <GuiXml>
-    <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|soft-shadow-thick" />
-    <Font name="LedgerFeedbackFont" font="$(BOLD_FONT)|14|shadow" />
+    <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|shadow" />
 
     <Controls>
         <Label name="LedgerRowLabel" font="LedgerRowFont" verticalAlignment="CENTER" wrapMode="ELLIPSIS" virtual="true">
-            <Dimensions y="32" />
+            <Dimensions y="LEDGER_ROW_HEIGHT" />
         </Label>
 
-        <Control name="LedgerRow" virtual="true">
-            <Dimensions y="32" />
+        <Control name="LedgerRow" mouseEnabled="true" virtual="true">
+            <Dimensions y="LEDGER_ROW_HEIGHT" />
+
+            <OnMouseEnter>
+                LEDGER:EnterRow(self)
+            </OnMouseEnter>
+
+            <OnMouseExit>
+                LEDGER:ExitRow(self)
+            </OnMouseExit>
 
             <Controls>
                 <Texture name="$(parent)BG" inherits="ZO_ThinListBgStrip" />
@@ -48,9 +55,9 @@
 
         <!-- / -->
 
-        <TopLevelControl name="Ledger" movable="true" mouseEnabled="true" resizeHandleSize="5" hidden="true">
-            <Dimensions x="840" y="320" />
-            <DimensionConstraints minX="840" minY="320" />
+        <TopLevelControl name="Ledger" movable="true" mouseEnabled="true" resizeHandleSize="10" hidden="true">
+            <Dimensions x="980" y="320" />
+            <DimensionConstraints minX="980" minY="320" />
             <Anchor point="CENTER" />
 
             <OnInitialized>
@@ -77,21 +84,26 @@
                     <Dimensions y="47" />
                     <Anchor point="TOPLEFT" />
                     <Anchor point="TOPRIGHT" />
-
                     <Controls>
-                        <Texture name="$(parent)FadeLeft" textureFile="EsoUI/Art/ItemToolTip/iconStrip.dds" excludeFromResizeToFitExtents="true">
+                        <Texture name="$(parent)FadeLeft" textureFile="esoui/art/itemtooltip/iconstrip.dds" excludeFromResizeToFitExtents="true">
                             <Dimensions x="100" y="4" />
                             <TextureCoords left="1" right="0" />
                             <Anchor point="TOPRIGHT" relativePoint="TOP" />
                         </Texture>
-                        <Texture name="$(parent)FadeRight" textureFile="EsoUI/Art/ItemToolTip/iconStrip.dds" excludeFromResizeToFitExtents="true">
+                        <Texture name="$(parent)FadeRight" textureFile="esoui/art/itemtooltip/iconstrip.dds" excludeFromResizeToFitExtents="true">
                             <Dimensions x="100" y="4" />
                             <Anchor point="TOPLEFT" relativePoint="TOP" />
                         </Texture>
 
-                        <Texture name="$(parent)Icon" textureFile="EsoUI/Art/Icons/item_generic_coinbag.dds" excludeFromResizeToFitExtents="true" layer="OVERLAY">
+                        <Texture name="$(parent)Icon" textureFile="esoui/art/icons/item_generic_coinbag.dds" excludeFromResizeToFitExtents="true" layer="OVERLAY" mouseEnabled="true">
                             <Dimensions x="64" y="64" />
                             <Anchor point="CENTER" relativePoint="TOP"/>
+                            <OnMouseDown>
+                                LEDGER.control:StartMoving()
+                            </OnMouseDown>
+                            <OnMouseUp>
+                                LEDGER.control:StopMovingOrResizing()
+                            </OnMouseUp>
                         </Texture>
                     </Controls>
                 </Control>
@@ -173,7 +185,7 @@
 
                 <!-- / -->
 
-                <Label name="$(parent)Summary" font="LedgerRowFont" verticalAlignment="CENTER" wrapMode="ELLIPSIS">
+                <Label name="$(parent)Summary" font="LedgerRowFont" verticalAlignment="CENTER" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
                     <Dimensions y="24" />
                     <Anchor point="BOTTOMLEFT" offsetX="20" offsetY="-20" />
                     <Anchor point="BOTTOMRIGHT" offsetX="-20" offsetY="-20" />

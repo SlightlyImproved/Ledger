@@ -1,4 +1,4 @@
--- Ledger 1.5.0 (Jan 1 2016)
+-- Ledger 1.5.0 (May 1 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -33,14 +33,17 @@ end
 
 local Ledger = ZO_SortFilterList:Subclass()
 
+LEDGER_ROW_HEIGHT = 28
+
 function Ledger:New(...)
     return ZO_SortFilterList.New(self, ...)
 end
 
-function Ledger:Initialize(control, sv)
+function Ledger:Initialize(control, savedVars)
     ZO_SortFilterList.Initialize(self, control)
 
-    ZO_ScrollList_AddDataType(self.list, 1, "LedgerRow", 32, function(...) self:SetupRow(...) end)
+    ZO_ScrollList_AddDataType(self.list, 1, "LedgerRow", LEDGER_ROW_HEIGHT, function(...) self:SetupRow(...) end)
+    ZO_ScrollList_EnableHighlight(self.list, "ZO_ThinListHighlight")
 
     self:SetAlternateRowBackgrounds(true)
     self:SetEmptyText(GetString(SI_LEDGER_EMPTY))
@@ -48,46 +51,46 @@ function Ledger:Initialize(control, sv)
     Fix_ZO_SortHeaderGroup_OnHeaderClicked(self.sortHeaderGroup)
     self.sortHeaderGroup:SelectHeaderByKey("timestamp")
 
-    self.sv = sv
+    self.savedVars = savedVars
 
     self.control:SetHandler("OnMoveStop", function()
-        self.sv.offsetX = self.control:GetLeft()
-        self.sv.offsetY = self.control:GetTop()
+        self.savedVars.offsetX = self.control:GetLeft()
+        self.savedVars.offsetY = self.control:GetTop()
     end)
 
     self.control:SetHandler("OnResizeStop", function()
-        self.sv.x = self.control:GetWidth()
-        self.sv.y = self.control:GetHeight()
+        self.savedVars.x = self.control:GetWidth()
+        self.savedVars.y = self.control:GetHeight()
         self:RefreshScrollListHeight()
     end)
 
-    if not (self.sv.offsetX == 0 and self.sv.offsetY == 0) then
+    if not (self.savedVars.offsetX == 0 and self.savedVars.offsetY == 0) then
         self.control:ClearAnchors()
-        self.control:SetAnchor(TOPLEFT, nil, TOPLEFT, self.sv.offsetX, self.sv.offsetY)
+        self.control:SetAnchor(TOPLEFT, nil, TOPLEFT, self.savedVars.offsetX, self.savedVars.offsetY)
     end
-    self.control:SetDimensions(self.sv.x, self.sv.y)
+    self.control:SetDimensions(self.savedVars.x, self.savedVars.y)
 
     self.sceneFragment = ZO_HUDFadeSceneFragment:New(self.control)
     HUD_SCENE:AddFragment(self.sceneFragment)
     HUD_UI_SCENE:AddFragment(self.sceneFragment)
-    self.sceneFragment:SetHiddenForReason("hidden", self.sv.isHidden)
+    self.sceneFragment:SetHiddenForReason("hidden", self.savedVars.isHidden)
 
     local function OnFragmentStateChange()
-        self.sv.isHidden = self.sceneFragment:IsHidden()
+        self.savedVars.isHidden = self.sceneFragment:IsHidden()
         self:Refresh()
     end
     self.sceneFragment:RegisterCallback("StateChange", OnFragmentStateChange)
 
-    local currentCharacter = GetUnitName("player")
+    local characterName = GetUnitName("player")
 
-    if not table.indexOf(self.sv.charactersList, currentCharacter) then
-        table.insert(self.sv.charactersList, currentCharacter)
+    if not table.indexOf(self.savedVars.charactersList, characterName) then
+        table.insert(self.savedVars.charactersList, characterName)
     end
 
-    self.closeButton = GetControl(self.control, "CloseButton")
-    self.closeButton:SetHandler("OnClicked", function()
-        self:Toggle()
-    end)
+    -- self.closeButton = GetControl(self.control, "CloseButton")
+    -- self.closeButton:SetHandler("OnClicked", function()
+    --     self:Toggle()
+    -- end)
 
     self.summaryLabel = GetControl(self.control, "Summary")
 
@@ -96,9 +99,9 @@ function Ledger:Initialize(control, sv)
 
     self.mergeCheckBox = GetControl(self.control, "OptionsMergeCheckBox")
     ZO_CheckButton_SetLabelText(self.mergeCheckBox, GetString(SI_LEDGER_MERGE_LABEL))
-    ZO_CheckButton_SetCheckState(self.mergeCheckBox, self.sv.options.shouldMerge)
+    ZO_CheckButton_SetCheckState(self.mergeCheckBox, self.savedVars.options.shouldMerge)
     ZO_CheckButton_SetToggleFunction(self.mergeCheckBox, function(control, state)
-        self.sv.options.shouldMerge = state
+        self.savedVars.options.shouldMerge = state
         self:Refresh()
     end)
 
@@ -108,7 +111,7 @@ function Ledger:Initialize(control, sv)
     self.control:RegisterForEvent(EVENT_PLAYER_COMBAT_STATE, OnPlayerCombatState)
 
     local function OnMoneyUpdate(event, newBalance, previousBalance, reason)
-        local entry =
+        local record =
         {
             timestamp = GetTimeStamp(),
             character = GetUnitName("player"),
@@ -117,7 +120,7 @@ function Ledger:Initialize(control, sv)
             balance = newBalance,
         }
 
-        table.insert(self.sv.masterList, entry)
+        table.insert(self.savedVars.masterList, record)
 
         self:Refresh()
     end
@@ -138,7 +141,7 @@ function Ledger:Initialize(control, sv)
             entry.reason = CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL
         end
 
-        table.insert(self.sv.masterList, entry)
+        table.insert(self.savedVars.masterList, entry)
 
         self:Refresh()
     end
@@ -158,19 +161,23 @@ function Ledger:SetupPeriodComboBox()
 
     local options =
     {
-        [1] = {
+        [1] =
+        {
             label = GetString(SI_LEDGER_PERIOD_1_HOUR),
             value = 3600,
         },
-        [2] = {
+        [2] =
+        {
             label = GetString(SI_LEDGER_PERIOD_1_DAY),
             value = 3600 * 24,
         },
-        [3] = {
+        [3] =
+        {
             label = GetString(SI_LEDGER_PERIOD_1_WEEK),
             value = 3600 * 24 * 7,
         },
-        [4] = {
+        [4] =
+        {
             label = GetString(SI_LEDGER_PERIOD_1_MONTH),
             value = 3600 * 24 * 30,
         },
@@ -178,13 +185,13 @@ function Ledger:SetupPeriodComboBox()
 
     for i = 1, #options do
         local item = self.periodComboBox:CreateItemEntry(options[i].label, function()
-            self.sv.options.selectedPeriod = options[i].value
+            self.savedVars.options.selectedPeriod = options[i].value
             self:Refresh()
         end)
 
         self.periodComboBox:AddItem(item)
 
-        if self.sv.options.selectedPeriod == options[i].value then
+        if self.savedVars.options.selectedPeriod == options[i].value then
             selectedIndex = i
         end
     end
@@ -211,11 +218,11 @@ function Ledger:SetupCharacterComboBox()
         }
     }
 
-    for i = 1, #self.sv.charactersList do
+    for i = 1, #self.savedVars.charactersList do
         local option =
         {
-            label = self.sv.charactersList[i],
-            value = self.sv.charactersList[i],
+            label = self.savedVars.charactersList[i],
+            value = self.savedVars.charactersList[i],
         }
 
         table.insert(options, option)
@@ -223,13 +230,13 @@ function Ledger:SetupCharacterComboBox()
 
     for i = 1, #options do
         local item = self.characterComboBox:CreateItemEntry(options[i].label, function()
-            self.sv.options.selectedCharacter = options[i].value
+            self.savedVars.options.selectedCharacter = options[i].value
             self:Refresh()
         end)
 
         self.characterComboBox:AddItem(item)
 
-        if self.sv.options.selectedCharacter == options[i].value then
+        if self.savedVars.options.selectedCharacter == options[i].value then
             selectedIndex = i
         end
     end
@@ -247,7 +254,7 @@ end
 function Ledger:RefreshSummary()
     local scrollData = ZO_ScrollList_GetDataList(self.list)
 
-    local isBankSelected = (self.sv.options.selectedCharacter == "bank")
+    local isBankSelected = (self.savedVars.options.selectedCharacter == "bank")
 
     if #scrollData > 0 then
         local variationByPeriod = 0
@@ -278,42 +285,61 @@ function Ledger:RefreshSummary()
         variationsByReason[CURRENCY_CHANGE_REASON_BANK_DEPOSIT] = nil
         variationsByReason[CURRENCY_CHANGE_REASON_BANK_WITHDRAWAL] = nil
 
-        local mostExpensive = {variation = 0}
-        local mostProfitable = {variation = 0}
+        local largestExpenseVariation = 0
+        local largestExpenseReason
+        local largestProfitVariation = 0
+        local largestProfitReason
 
         for reason, variation in pairs(variationsByReason) do
-            if variation >= mostProfitable.variation then
-                mostProfitable.variation = variation
-                mostProfitable.reason = reason
+            if variation > largestProfitVariation then
+                largestProfitVariation = variation
+                largestProfitReason = reason
             end
 
-            if variation <= mostExpensive.variation then
-                mostExpensive.variation = variation
-                mostExpensive.reason = reason
+            if variation < largestExpenseVariation then
+                largestExpenseVariation = variation
+                largestExpenseReason = reason
             end
         end
 
         local t =
         {
             Ledger_FormatCurrencyVariation(variationByPeriod),
-            self.periodComboBox:GetSelectedItem(),
+            ZO_DEFAULT_ENABLED_COLOR:Colorize(self.periodComboBox:GetSelectedItem()),
         }
 
-        local summary = zo_strformat(GetString("SI_LEDGER_SUMMARY", 1), unpack(t))
+        local summary1 = zo_strformat(GetString("SI_LEDGER_SUMMARY", 1), unpack(t))
+        local summary2 = ""
 
-        if mostExpensive.reason and mostProfitable.reason then
+        if largestExpenseReason and largestProfitReason then
             t =
             {
-                GetString("SI_LEDGER_REASON", mostExpensive.reason),
-                Ledger_FormatCurrencyVariation(mostExpensive.variation),
-                GetString("SI_LEDGER_REASON", mostProfitable.reason),
-                Ledger_FormatCurrencyVariation(mostProfitable.variation),
+                ZO_DEFAULT_ENABLED_COLOR:Colorize(GetString("SI_LEDGER_REASON", largestProfitReason)),
+                Ledger_FormatCurrencyVariation(largestProfitVariation),
+                ZO_DEFAULT_ENABLED_COLOR:Colorize(GetString("SI_LEDGER_REASON", largestExpenseReason)),
+                Ledger_FormatCurrencyVariation(largestExpenseVariation),
             }
 
-            summary = summary.." "..zo_strformat(GetString("SI_LEDGER_SUMMARY", 2), unpack(t))
+            summary2 = zo_strformat(GetString("SI_LEDGER_SUMMARY", 2), unpack(t))
+        elseif largestExpenseReason then
+            t =
+            {
+                ZO_DEFAULT_ENABLED_COLOR:Colorize(GetString("SI_LEDGER_REASON", largestExpenseReason)),
+                Ledger_FormatCurrencyVariation(largestExpenseVariation),
+            }
+
+            summary2 = zo_strformat(GetString(SI_LEDGER_SUMMARY2_EXPENSE), unpack(t))
+        elseif largestProfitReason then
+            t =
+            {
+                ZO_DEFAULT_ENABLED_COLOR:Colorize(GetString("SI_LEDGER_REASON", largestProfitReason)),
+                Ledger_FormatCurrencyVariation(largestProfitVariation),
+            }
+
+            summary2 = zo_strformat(GetString(SI_LEDGER_SUMMARY2_PROFIT), unpack(t))
         end
 
-        self.summaryLabel:SetText(summary)
+        self.summaryLabel:SetText(zo_strjoin(" ", summary1, summary2))
     else
         self.summaryLabel:SetText(GetString(SI_LEDGER_SUMMARY_EMPTY))
     end
@@ -323,10 +349,10 @@ function Ledger:BuildMasterList()
     self.masterList = {}
 
     local t = {}
-    local threshold = GetTimeStamp() - self.sv.options.selectedPeriod
+    local threshold = GetTimeStamp() - self.savedVars.options.selectedPeriod
 
-    for i = #self.sv.masterList, 1, -1 do
-        local entry = self.sv.masterList[i]
+    for i = #self.savedVars.masterList, 1, -1 do
+        local entry = self.savedVars.masterList[i]
 
         if entry.timestamp >= threshold then
             table.insert(t, ZO_ShallowTableCopy(entry))
@@ -349,10 +375,10 @@ function Ledger:FilterScrollList()
     for i = 1, #self.masterList do
         currentEntry = self.masterList[i]
 
-        local matchSelectedCharacter = (currentEntry.character == self.sv.options.selectedCharacter)
+        local matchSelectedCharacter = (currentEntry.character == self.savedVars.options.selectedCharacter)
 
-        if (not self.sv.options.selectedCharacter or matchSelectedCharacter) then
-            if (not self.sv.options.shouldMerge) or (self.sv.options.shouldMerge and not previousEntry) then
+        if (not self.savedVars.options.selectedCharacter or matchSelectedCharacter) then
+            if (not self.savedVars.options.shouldMerge) or (self.savedVars.options.shouldMerge and not previousEntry) then
                 table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, currentEntry))
                 previousEntry = currentEntry
             else
@@ -441,11 +467,12 @@ end
 
 function Ledger:Toggle()
     if self.sceneFragment:IsHidden() then
-        SCENE_MANAGER:SetInUIMode(true)
         self.sceneFragment:SetHiddenForReason("hidden", false)
         self.control:BringWindowToTop()
+        SCENE_MANAGER:SetInUIMode(true)
     else
         self.sceneFragment:SetHiddenForReason("hidden", true)
+        SCENE_MANAGER:SetInUIMode(false)
     end
 end
 
@@ -458,7 +485,7 @@ local defaultSavedVars =
     ["masterList"] = {},
     ["charactersList"] = {},
     ["isHidden"] = false,
-    ["x"] = 840,
+    ["x"] = 980,
     ["y"] = 320,
     ["offsetX"] = 0,
     ["offsetY"] = 0,
@@ -474,21 +501,8 @@ function Ledger_OnInitialized(control)
     EVENT_MANAGER:RegisterForEvent(LEDGER, EVENT_ADD_ON_LOADED, function(event, addonName)
         if (addonName == LEDGER) then
             EVENT_MANAGER:UnregisterForEvent(LEDGER, EVENT_ADD_ON_LOADED)
-
-            local sv = ZO_SavedVars:NewAccountWide("LedgerSavedVars", 1, nil, defaultSavedVars)
-
-            if LedgerCache then
-                local displayName = GetUnitDisplayName("player")
-                local oldSavedVars = LedgerCache["Default"][displayName]
-
-                if oldSavedVars then
-                    sv.masterList = oldSavedVars["$AccountWide"].data
-                    sv.charactersList = oldSavedVars["$AccountWide"].characters
-                    LedgerCache["Default"][displayName] = nil
-                end
-            end
-
-            LEDGER = Ledger:New(control, sv)
+            local savedVars = ZO_SavedVars:NewAccountWide("LedgerSavedVars", 1, nil, defaultSavedVars)
+            LEDGER = Ledger:New(control, savedVars)
         end
     end)
 end
