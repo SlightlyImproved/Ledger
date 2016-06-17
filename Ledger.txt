@@ -9,7 +9,6 @@ Extra.lua
 L10n.lua
 
 EN.lua
-$(language).lua
 
 Ledger.lua
 Ledger.xml
