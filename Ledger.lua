@@ -8,16 +8,17 @@ LEDGER = "Ledger"
 --
 --
 
+local INCOME_COLOR = ZO_ColorDef:New("11EE99")
+local EXPENSE_COLOR = ZO_ColorDef:New("EE2222")
+
 local function Ledger_FormatCurrencyVariation(value)
-    local incomeColor = ZO_ColorDef:New("11EE99")
-    local expenseColor = ZO_ColorDef:New("EE2222")
 
     local formattedValue = ZO_CurrencyControl_FormatCurrency(zo_abs(value))
 
     if value >= 0 then
-        return incomeColor:Colorize("+"..formattedValue)
+        return INCOME_COLOR:Colorize("+"..formattedValue)
     else
-        return expenseColor:Colorize("-"..formattedValue)
+        return EXPENSE_COLOR:Colorize("-"..formattedValue)
     end
 end
 
@@ -180,6 +181,16 @@ function Ledger:SetupPeriodComboBox()
         {
             label = GetString(SI_LEDGER_PERIOD_1_MONTH),
             value = 3600 * 24 * 30,
+        },
+        [5] =
+        {
+            label = GetString(SI_LEDGER_PERIOD_1_QUARTER),
+            value = 3600 * 24 * 30 * 3,
+        },
+        [6] =
+        {
+            label = GetString(SI_LEDGER_PERIOD_1_YEAR),
+            value = 3600 * 24 * 30 * 12,
         },
     }
 
