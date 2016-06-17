@@ -1,18 +1,18 @@
 <!--
-  -- Ledger 1.5.0 (May 1 2016)
+  -- Ledger 1.5.0 (Jun 17 2016)
   -- Licensed under CC BY-NC-SA 4.0
   -- More at https://github.com/haggen/Ledger
   -->
 <GuiXml>
-    <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|shadow" />
+    <Font name="LedgerRowFont" font="$(MEDIUM_FONT)|16|shadow"/>
 
     <Controls>
         <Label name="LedgerRowLabel" font="LedgerRowFont" verticalAlignment="CENTER" wrapMode="ELLIPSIS" virtual="true">
-            <Dimensions y="LEDGER_ROW_HEIGHT" />
+            <Dimensions y="LEDGER_ROW_HEIGHT"/>
         </Label>
 
         <Control name="LedgerRow" mouseEnabled="true" virtual="true">
-            <Dimensions y="LEDGER_ROW_HEIGHT" />
+            <Dimensions y="LEDGER_ROW_HEIGHT"/>
 
             <OnMouseEnter>
                 LEDGER:EnterRow(self)
@@ -23,32 +23,32 @@
             </OnMouseExit>
 
             <Controls>
-                <Texture name="$(parent)BG" inherits="ZO_ThinListBgStrip" />
+                <Texture name="$(parent)BG" inherits="ZO_ThinListBgStrip"/>
 
                 <Label name="$(parent)Timestamp" inherits="LedgerRowLabel">
-                    <Dimensions x="160" />
-                    <Anchor point="LEFT" />
+                    <Dimensions x="160"/>
+                    <Anchor point="LEFT"/>
                 </Label>
 
                 <Label name="$(parent)Character" inherits="LedgerRowLabel">
-                    <Dimensions x="180" />
-                    <Anchor point="LEFT" relativeTo="$(parent)Timestamp" relativePoint="RIGHT" />
+                    <Dimensions x="180"/>
+                    <Anchor point="LEFT" relativeTo="$(parent)Timestamp" relativePoint="RIGHT"/>
                 </Label>
 
                 <Label name="$(parent)Balance" inherits="LedgerRowLabel">
-                    <Dimensions x="120" />
-                    <Anchor point="RIGHT" />
+                    <Dimensions x="120"/>
+                    <Anchor point="RIGHT"/>
                 </Label>
 
                 <Label name="$(parent)Variation" inherits="LedgerRowLabel">
-                    <Dimensions x="120" />
-                    <Anchor point="RIGHT" relativeTo="$(parent)Balance" relativePoint="LEFT" />
+                    <Dimensions x="120"/>
+                    <Anchor point="RIGHT" relativeTo="$(parent)Balance" relativePoint="LEFT"/>
                 </Label>
 
                 <Label name="$(parent)Reason" inherits="LedgerRowLabel">
-                    <Dimensions />
-                    <Anchor point="LEFT" relativeTo="$(parent)Character" relativePoint="RIGHT" />
-                    <Anchor point="RIGHT" relativeTo="$(parent)Variation" relativePoint="LEFT" />
+                    <Dimensions/>
+                    <Anchor point="LEFT" relativeTo="$(parent)Character" relativePoint="RIGHT"/>
+                    <Anchor point="RIGHT" relativeTo="$(parent)Variation" relativePoint="LEFT"/>
                 </Label>
             </Controls>
         </Control>
@@ -56,9 +56,9 @@
         <!-- / -->
 
         <TopLevelControl name="Ledger" movable="true" mouseEnabled="true" resizeHandleSize="10" hidden="true">
-            <Dimensions x="980" y="320" />
-            <DimensionConstraints minX="980" minY="320" />
-            <Anchor point="CENTER" />
+            <Dimensions x="980" y="320"/>
+            <DimensionConstraints minX="980" minY="320"/>
+            <Anchor point="CENTER"/>
 
             <OnInitialized>
                 Ledger_OnInitialized(self)
@@ -66,13 +66,13 @@
 
             <Controls>
                 <Backdrop name="$(parent)BG" inherits="ZO_DefaultBackdrop">
-                    <AnchorFill />
+                    <AnchorFill/>
                 </Backdrop>
 
                 <!-- / -->
 
                 <Button name="$(parent)CloseButton" inherits="ZO_CloseButton">
-                    <Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" offsetX="-10" offsetY="10" />
+                    <Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" offsetX="-10" offsetY="10"/>
                     <OnClicked>
                         LEDGER:Toggle()
                     </OnClicked>
@@ -81,22 +81,22 @@
                 <!-- / -->
 
                 <Control name="$(parent)Title">
-                    <Dimensions y="47" />
-                    <Anchor point="TOPLEFT" />
-                    <Anchor point="TOPRIGHT" />
+                    <Dimensions y="47"/>
+                    <Anchor point="TOPLEFT"/>
+                    <Anchor point="TOPRIGHT"/>
                     <Controls>
                         <Texture name="$(parent)FadeLeft" textureFile="esoui/art/itemtooltip/iconstrip.dds" excludeFromResizeToFitExtents="true">
-                            <Dimensions x="100" y="4" />
-                            <TextureCoords left="1" right="0" />
-                            <Anchor point="TOPRIGHT" relativePoint="TOP" />
+                            <Dimensions x="100" y="4"/>
+                            <TextureCoords left="1" right="0"/>
+                            <Anchor point="TOPRIGHT" relativePoint="TOP"/>
                         </Texture>
                         <Texture name="$(parent)FadeRight" textureFile="esoui/art/itemtooltip/iconstrip.dds" excludeFromResizeToFitExtents="true">
-                            <Dimensions x="100" y="4" />
-                            <Anchor point="TOPLEFT" relativePoint="TOP" />
+                            <Dimensions x="100" y="4"/>
+                            <Anchor point="TOPLEFT" relativePoint="TOP"/>
                         </Texture>
 
                         <Texture name="$(parent)Icon" textureFile="esoui/art/icons/justice_stolen_coin_001.dds" excludeFromResizeToFitExtents="true" layer="OVERLAY" mouseEnabled="true">
-                            <Dimensions x="64" y="64" />
+                            <Dimensions x="64" y="64"/>
                             <Anchor point="CENTER" relativePoint="TOP"/>
                             <OnMouseDown>
                                 LEDGER.control:StartMoving()
@@ -111,71 +111,99 @@
                 <!-- / -->
 
                 <Control name="$(parent)Options">
-                    <Dimensions y="32" />
+                    <Dimensions y="32"/>
 
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="20" />
-                    <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-20" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)Title" relativePoint="BOTTOMLEFT" offsetX="20"/>
+                    <Anchor point="TOPRIGHT" relativeTo="$(parent)Title" relativePoint="BOTTOMRIGHT" offsetX="-20"/>
 
                     <Controls>
                         <Control name="$(parent)PeriodComboBox" inherits="ZO_ComboBox">
                             <Dimensions x="170"/>
-                            <Anchor point="LEFT" relativePoint="LEFT" />
+                            <Anchor point="LEFT" relativePoint="LEFT"/>
                         </Control>
                         <Control name="$(parent)CharacterComboBox" inherits="ZO_ComboBox">
                             <Dimensions x="270"/>
-                            <Anchor point="LEFT" relativeTo="$(parent)PeriodComboBox" relativePoint="RIGHT" offsetX="10" />
+                             <Anchor point="LEFT" relativeTo="$(parent)PeriodComboBox" relativePoint="RIGHT" offsetX="10"/>
                         </Control>
+                        <Backdrop name="$(parent)Search" inherits="ZO_InsetBackground" centerColor="00000000" edgeColor="00000000">
+                            <Dimensions x="200" y="31"/>
+                            <Anchor point="LEFT" relativeTo="$(parent)CharacterComboBox" relativePoint="RIGHT" offsetX="10"/>
+                            <Controls>
+                                <EditBox name="$(parent)Box" inherits="ZO_DefaultEdit">
+                                    <Anchor point="LEFT" offsetX="8"/>
+                                    <Anchor point="RIGHT" offsetX="-8"/>
+                                    <OnInitialized>
+                                        ZO_EditDefaultText_Initialize(self, GetString(SI_LEDGER_SEARCH_LABEL))
+                                    </OnInitialized>
+                                    <OnIMEBeginComposition>
+                                        ZO_EditDefaultText_OnIMECompositionChanged(self)
+                                    </OnIMEBeginComposition>
+                                    <OnIMEEndComposition>
+                                        ZO_EditDefaultText_OnIMECompositionChanged(self)
+                                    </OnIMEEndComposition>
+                                    <OnEscape>
+                                        self:SetText("")
+                                    </OnEscape>
+                                    <Controls>
+                                        <Label name="$(parent)Text" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DEFAULT_TEXT" font="ZoFontEdit">
+                                            <Anchor point="TOPLEFT"/>
+                                            <Anchor point="BOTTOMRIGHT"/>
+                                        </Label>
+                                    </Controls>
+                                </EditBox>
+                            </Controls>
+                        </Backdrop>
                         <Button name="$(parent)MergeCheckBox" inherits="ZO_CheckButton">
-                            <Anchor point="LEFT" relativeTo="$(parent)CharacterComboBox" relativePoint="RIGHT" offsetX="15" offsetY="-1" />
+                            <Anchor point="LEFT" relativeTo="$(parent)Search" relativePoint="RIGHT" offsetX="15" offsetY="-1"/>
                         </Button>
-                    </Controls>
+                     </Controls>
                 </Control>
 
                 <!-- / -->
 
                 <Control name="$(parent)Headers">
-                    <Dimensions y="32" />
+                    <Dimensions y="32"/>
 
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)Options" relativePoint="BOTTOMLEFT" offsetY="10" />
-                    <Anchor point="TOPRIGHT" relativeTo="$(parent)Options" relativePoint="BOTTOMRIGHT" offsetY="10" offsetX="-10" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)Options" relativePoint="BOTTOMLEFT" offsetY="10"/>
+                    <Anchor point="TOPRIGHT" relativeTo="$(parent)Options" relativePoint="BOTTOMRIGHT" offsetY="10" offsetX="-10"/>
 
                     <Controls>
                         <Control name="$(parent)Timestamp" inherits="ZO_SortHeader">
-                            <Dimensions x="160" y="32" />
-                            <Anchor point="LEFT" />
+                            <Dimensions x="160" y="32"/>
+                            <Anchor point="LEFT"/>
                             <OnInitialized>
                                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_TIMESTAMP), "timestamp", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
                             </OnInitialized>
                         </Control>
 
                         <Control name="$(parent)Character" inherits="ZO_SortHeader">
-                            <Dimensions x="180" y="32" />
-                            <Anchor point="LEFT" relativeTo="$(parent)Timestamp" relativePoint="RIGHT" />
+                            <Dimensions x="180" y="32"/>
+                            <Anchor point="LEFT" relativeTo="$(parent)Timestamp" relativePoint="RIGHT"/>
                             <OnInitialized>
                                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_CHARACTER), "character", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
                             </OnInitialized>
                         </Control>
 
                         <Control name="$(parent)Balance" inherits="ZO_SortHeader">
-                            <Dimensions x="120" y="32" />
-                            <Anchor point="RIGHT" />
+                            <Dimensions x="120" y="32"/>
+                            <Anchor point="RIGHT"/>
                             <OnInitialized>
                                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_BALANCE), "balance", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
                             </OnInitialized>
                         </Control>
 
                         <Control name="$(parent)Variation" inherits="ZO_SortHeader">
-                            <Dimensions x="120" y="32" />
-                            <Anchor point="RIGHT" relativeTo="$(parent)Balance" relativePoint="LEFT" />
+                            <Dimensions x="120" y="32"/>
+                            <Anchor point="RIGHT" relativeTo="$(parent)Balance" relativePoint="LEFT"/>
                             <OnInitialized>
                                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_VARIATION), "variation", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
                             </OnInitialized>
                         </Control>
 
                         <Control name="$(parent)Reason" inherits="ZO_SortHeader">
-                            <Dimensions y="32" />
-                            <Anchor point="LEFT" relativeTo="$(parent)Character" relativePoint="RIGHT" />
-                            <Anchor point="RIGHT" relativeTo="$(parent)Variation" relativePoint="LEFT" />
+                            <Dimensions y="32"/>
+                            <Anchor point="LEFT" relativeTo="$(parent)Character" relativePoint="RIGHT"/>
+                            <Anchor point="RIGHT" relativeTo="$(parent)Variation" relativePoint="LEFT"/>
                             <OnInitialized>
                                 ZO_SortHeader_Initialize(self, GetString(SI_LEDGER_HEADER_REASON), "reason", ZO_SORT_ORDER_DOWN, TEXT_ALIGN_LEFT, "ZoFontGameLargeBold")
                             </OnInitialized>
@@ -186,16 +214,16 @@
                 <!-- / -->
 
                 <Label name="$(parent)Summary" font="LedgerRowFont" verticalAlignment="CENTER" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
-                    <Dimensions y="24" />
-                    <Anchor point="BOTTOMLEFT" offsetX="20" offsetY="-20" />
-                    <Anchor point="BOTTOMRIGHT" offsetX="-20" offsetY="-20" />
+                    <Dimensions y="24"/>
+                    <Anchor point="BOTTOMLEFT" offsetX="20" offsetY="-20"/>
+                    <Anchor point="BOTTOMRIGHT" offsetX="-20" offsetY="-20"/>
                 </Label>
 
                 <!-- / -->
 
                 <Control name="$(parent)List" inherits="ZO_ScrollList" >
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" />
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Summary" relativePoint="TOPRIGHT" offsetX="6" offsetY="-10" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT"/>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)Summary" relativePoint="TOPRIGHT" offsetX="6" offsetY="-10"/>
                 </Control>
             </Controls>
         </TopLevelControl>

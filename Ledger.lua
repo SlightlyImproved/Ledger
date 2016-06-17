@@ -1,4 +1,4 @@
--- Ledger 1.5.0 (May 1 2016)
+-- Ledger 1.5.0 (Jun 17 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -105,6 +105,14 @@ function Ledger:Initialize(control, savedVars)
         self.savedVars.options.shouldMerge = state
         self:Refresh()
     end)
+
+    self.searchBox = GetControl(self.control, "OptionsSearchBox")
+    self.searchBox:SetHandler("OnTextChanged", function(editBox)
+        ZO_EditDefaultText_OnTextChanged(editBox)
+        self.savedVars.options.searchQuery = editBox:GetText()
+        self:Refresh()
+    end)
+    self.searchBox:SetText(self.savedVars.options.searchQuery)
 
     local function OnPlayerCombatState(event, inCombat)
         self.sceneFragment:SetHiddenForReason("combat", inCombat)
@@ -387,8 +395,14 @@ function Ledger:FilterScrollList()
         currentEntry = self.masterList[i]
 
         local matchSelectedCharacter = (currentEntry.character == self.savedVars.options.selectedCharacter)
+        local matchSearchQuery = true
+        if (#self.savedVars.options.searchQuery > 0) then
+            local reason = string.lower(GetString("SI_LEDGER_REASON", currentEntry.reason))
+            local query = string.lower(self.savedVars.options.searchQuery)
+            matchSearchQuery = string.find(reason, query, 0, true)
+        end
 
-        if (not self.savedVars.options.selectedCharacter or matchSelectedCharacter) then
+        if (matchSearchQuery) and (not self.savedVars.options.selectedCharacter or matchSelectedCharacter) then
             if (not self.savedVars.options.shouldMerge) or (self.savedVars.options.shouldMerge and not previousEntry) then
                 table.insert(scrollData, ZO_ScrollList_CreateDataEntry(1, currentEntry))
                 previousEntry = currentEntry
@@ -502,6 +516,7 @@ local defaultSavedVars =
     ["offsetY"] = 0,
     ["options"] =
     {
+        ["searchQuery"] = "",
         ["shouldMerge"] = true,
         ["selectedPeriod"] = 3600,
         ["selectedCharacter"] = nil

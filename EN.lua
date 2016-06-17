@@ -1,4 +1,4 @@
--- Ledger 1.5.0 (May 1 2016)
+-- Ledger 1.5.0 (Jun 17 2016)
 -- Licensed under CC BY-NC-SA 4.0
 -- More at https://github.com/haggen/Ledger
 
@@ -38,7 +38,7 @@ local currencyChangeReasons =
     [CURRENCY_CHANGE_REASON_KEEP_REPAIR]              = "Unknown (KEEP_REPAIR)",
     [CURRENCY_CHANGE_REASON_KEEP_REWARD]              = "Unknown (KEEP_REWARD)",
     [CURRENCY_CHANGE_REASON_KEEP_UPGRADE]             = "Unknown (KEEP_UPGRADE)",
-    [CURRENCY_CHANGE_REASON_KILL]                     = "Unknown (KILL)",
+    [CURRENCY_CHANGE_REASON_KILL]                     = "Kill",
     [CURRENCY_CHANGE_REASON_LOOT]                     = "Loot",
     [CURRENCY_CHANGE_REASON_LOOT_STOLEN]              = "Theft",
     [CURRENCY_CHANGE_REASON_MAIL]                     = "Mail attachment",
@@ -78,7 +78,7 @@ end
 
 ZO_CreateStringId("SI_BINDING_NAME_LEDGER_TOGGLE"   , "Open/close Ledger")
 ZO_CreateStringId("SI_LEDGER_TITLE"                 , "Ledger")
-ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "No record found for the selected period and character.")
+ZO_CreateStringId("SI_LEDGER_EMPTY"                 , "No record found for the selected criteria.")
 ZO_CreateStringId("SI_LEDGER_HEADER_TIMESTAMP"      , "Time")
 ZO_CreateStringId("SI_LEDGER_HEADER_CHARACTER"      , "Character")
 ZO_CreateStringId("SI_LEDGER_HEADER_REASON"         , "Reason")
@@ -93,6 +93,7 @@ ZO_CreateStringId("SI_LEDGER_PERIOD_1_YEAR"         , "Last 1 year")
 ZO_CreateStringId("SI_LEDGER_ALL_CHARACTERS"        , "Any character")
 ZO_CreateStringId("SI_LEDGER_BANK_CHARACTER"        , "Bank")
 ZO_CreateStringId("SI_LEDGER_MERGE_LABEL"           , "Merge Similar")
+ZO_CreateStringId("SI_LEDGER_SEARCH_LABEL"          , "Search by reason.")
 ZO_CreateStringId("SI_LEDGER_SUMMARY1"              , "Balance changed by <<1>> in the <<z:2>>.")
 ZO_CreateStringId("SI_LEDGER_SUMMARY2"              , "You profited most from <<1>> (<<2>>) and spent most on <<3>> (<<4>>).")
 ZO_CreateStringId("SI_LEDGER_SUMMARY2_EXPENSE"      , "You spent most on <<1>> (<<2>>).")
