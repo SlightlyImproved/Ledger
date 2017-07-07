@@ -22,6 +22,8 @@ See CHANGELOG.bbcode.
 
 Any of this wouldn't be possible without lots of help from the good people of the ESOUI community. Thank you, and may the Nine bless you all!
 
-## License
+## Legal
 
-See [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+[MIT](MIT.md) © 2016 Arthur Corenzan.
+
+This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved. See [Add-on Terms of Use](https://account.elderscrollsonline.com/add-on-terms).
