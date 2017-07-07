@@ -1,6 +1,3 @@
--- Ledger 1.5.0 (Jun 17 2016)
--- Licensed under CC BY-NC-SA 4.0
--- More at https://github.com/haggen/Ledger
 
 -- Fix bug when sorting ZO_SortHeaderGroup
 -- esoui/libraries/zo_sortheadergroup/zo_sortheadergroup.lua:149
@@ -22,6 +19,8 @@ function Fix_ZO_SortHeaderGroup_OnHeaderClicked(ZO_SortHeaderGroup)
         end
     end
 end
+-- Ledger
+-- The MIT License © 2016 Arthur Corenzan
 
 -- Get numeric index of a value or nil
 function table.indexOf(t, needle)

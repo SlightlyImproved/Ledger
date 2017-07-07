@@ -1,6 +1,6 @@
--- Ledger 1.5.0 (Jun 17 2016)
--- Licensed under CC BY-NC-SA 4.0
--- More at https://github.com/haggen/Ledger
+-- Ledger
+-- The MIT License © 2016 Arthur Corenzan
+
 
 local currencyChangeReasons =
 {

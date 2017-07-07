@@ -1,5 +1,5 @@
--- L10n 1.1 (Aug 28 2015)
--- Licensed under CC BY-NC-SA 4.0
+-- L10n
+-- The MIT License © 2016 Arthur Corenzan
 
 function L10n_GetTimeZone()
     return GetSecondsSinceMidnight() - (GetTimeStamp() % 86400)
