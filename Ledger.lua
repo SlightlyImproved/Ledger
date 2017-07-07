@@ -48,7 +48,6 @@ function Ledger:Initialize(control, savedVars)
     self:SetAlternateRowBackgrounds(true)
     self:SetEmptyText(GetString(SI_LEDGER_EMPTY))
 
-    Fix_ZO_SortHeaderGroup_OnHeaderClicked(self.sortHeaderGroup)
     self.sortHeaderGroup:SelectHeaderByKey("timestamp")
 
     self.savedVars = savedVars
