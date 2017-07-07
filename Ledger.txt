@@ -1,7 +1,7 @@
 ## APIVersion: 100019
 ## Title: Ledger
 ## Description: Keep tabs on your money.
-## Version: 1.5.0
+## Version: 1.5.1
 ## License: MIT
 ## SavedVariables: LedgerSavedVars
 
